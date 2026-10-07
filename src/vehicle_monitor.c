@@ -37,3 +37,14 @@ RxState CheckVehicleStateRx(
     if (engineRxState == RX_TIMEOUT) return RX_TIMEOUT;
     return RX_NORMAL;
 }
+
+ClusterWarning DetermineClusterWarning(
+    DoorOpenWarningState doorOpenWarningState,
+    SensorState lightSensorState,
+    SensorState rainSensorState
+) {
+    if (doorOpenWarningState == DOOR_OPEN_WARNING_ACTIVE) return WARNING_DOOR_OPEN;
+    if (lightSensorState == SENSOR_FAULT) return WARNING_LIGHT_SENSOR_FAULT;
+    if (rainSensorState == SENSOR_FAULT) return WARNING_RAIN_SENSOR_FAULT;
+    return WARNING_NONE;
+}
