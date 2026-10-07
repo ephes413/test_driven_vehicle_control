@@ -8,9 +8,14 @@ A vehicle control software project developed and verified using test cases deriv
 test_driven_vehicle_control/
 ├── README.md
 ├── src/
-│   └── vehicle_control.c
+│   ├── vehicle_control.c
+│   ├── vehicle_monitor.c
+│   └── vehicle_timer.c
 ├── include/
-│   └── vehicle_control.h
+│   ├── vehicle_control.h
+│   ├── vehicle_monitor.h
+│   ├── vehicle_timer.h
+│   └── vehicle_types.h
 ├── test/
 │   ├── test_driver.py
 │   └── testcases/
@@ -21,7 +26,10 @@ test_driven_vehicle_control/
 │       ├── CheckLightSensorFault.csv
 │       ├── CheckRainSensorFault.csv
 │       ├── DetermineClusterWarning.csv
-│       └── CheckVehicleStateRx.csv
+│       ├── CheckVehicleStateRx.csv
+│       ├── UpdateLowIlluminanceTime.csv
+│       ├── UpdateHighIlluminanceTime.csv
+│       └── UpdateWiperActiveTime.csv
 └── docs/
     └── requirements.md
 ```
@@ -79,6 +87,9 @@ Test case IDs follow the format:
 | `RSF` | `CheckRainSensorFault()` |
 | `CW` | `DetermineClusterWarning()` |
 | `VRX` | `CheckVehicleStateRx()` |
+| `LIT` | `UpdateLowIlluminanceTime()` |
+| `HIT` | `UpdateHighIlluminanceTime()` |
+| `WAT` | `UpdateWiperActiveTime()` |
 
 Examples:
 
@@ -87,4 +98,7 @@ HL_001
 HL_002
 WP_001
 LSF_003
+LIT_001
+HIT_001
+WAT_001
 ```
