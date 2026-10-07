@@ -86,17 +86,17 @@ typedef enum {
 
 unsigned int UpdateLowIlluminanceTime(
     int illuminance,
-    unsigned int currentTime
+    unsigned int lowIlluminanceTime
 );
 
 unsigned int UpdateHighIlluminanceTime(
     int illuminance,
-    unsigned int currentTime
+    unsigned int highIlluminanceTime
 );
 
 unsigned int UpdateWiperActiveTime(
     WiperState wiperState,
-    unsigned int currentTime
+    unsigned int wiperActiveTime
 );
 
 HeadLightState ControlHeadLight(
