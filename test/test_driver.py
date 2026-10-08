@@ -1,109 +1,216 @@
 #!/usr/bin/env python3
-"""CSV-driven tests of the actual C ControlWiper function; no C test driver needed."""
+"""Run CSV test cases against compiled C functions discovered from headers."""
+import argparse
 import csv
 import ctypes
+import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-HEADER_DIR = ROOT / 'include'
-SOURCE = ROOT / 'src' / 'vehicle_control.c'
-CSV_PATH = ROOT / 'test' / 'testcases' / 'ControlWiper.csv'
-COLUMNS = ['testCaseId', 'vehicleRxState', 'engineState', 'wiperSwitch',
-           'rainSensorState', 'rainAmount', 'speed', 'ControlWiper']
-ENUM_COLUMNS = ['vehicleRxState', 'engineState', 'wiperSwitch',
-                'rainSensorState', 'ControlWiper']
+INCLUDE = ROOT / 'include'
+SRC = ROOT / 'src'
+CASES = ROOT / 'test' / 'testcases'
+IDENT = r'[A-Za-z_][A-Za-z_0-9]*'
+PROTOTYPE = re.compile(rf'\b(?P<ret>{IDENT}(?:\s+{IDENT})*)\s+(?P<name>{IDENT})\s*\((?P<args>[^()]*)\)\s*;', re.S)
+PARAM = re.compile(rf'^\s*(?P<type>{IDENT}(?:\s+{IDENT})*)\s+(?P<name>{IDENT})\s*$')
+PRIMITIVES = {'int': ctypes.c_int, 'signed int': ctypes.c_int,
+              'unsigned': ctypes.c_uint, 'unsigned int': ctypes.c_uint}
 
 
-def run_gcc(command):
-    subprocess.run(command, check=True)
+def run(cmd):
+    subprocess.run(cmd, check=True)
 
 
-def read_cases():
-    with CSV_PATH.open(newline='', encoding='utf-8-sig') as stream:
-        reader = csv.DictReader(stream)
-        if reader.fieldnames != COLUMNS:
-            raise ValueError(f'Unexpected CSV columns: {reader.fieldnames}')
+def headers():
+    result = sorted(INCLUDE.glob('*.h'))
+    if not result:
+        raise ValueError('No header files in include/')
+    return result
+
+
+def clean_header(path):
+    source = path.read_text(encoding='utf-8')
+    source = re.sub(r'/\*.*?\*/', ' ', source, flags=re.S)
+    source = re.sub(r'//[^\n]*', '', source)
+    source = re.sub(r'^\s*#.*$', '', source, flags=re.M)
+    return source
+
+
+def discover():
+    found = {}
+    for header in headers():
+        source = clean_header(header)
+        # Only declarations at the top level; ignore enum/struct bodies.
+        depth = 0
+        top = []
+        for char in source:
+            if char == '{':
+                depth += 1
+            elif char == '}':
+                depth -= 1
+                if depth < 0:
+                    raise ValueError(f'Unbalanced braces: {header}')
+            elif depth == 0:
+                top.append(char)
+        if depth:
+            raise ValueError(f'Unbalanced braces: {header}')
+        for match in PROTOTYPE.finditer(''.join(top)):
+            name = match['name']
+            ret = ' '.join(match['ret'].split())
+            args = match['args'].strip()
+            params = []
+            if args and args != 'void':
+                for declaration in args.split(','):
+                    parsed = PARAM.fullmatch(declaration.strip())
+                    if not parsed:
+                        raise ValueError(f'Unsupported parameter in {name}: {declaration!r}')
+                    params.append((parsed['name'], ' '.join(parsed['type'].split())))
+            if name in found:
+                raise ValueError(f'Duplicate declaration: {name}')
+            found[name] = (ret, params)
+    return found
+
+
+def ctype(type_name):
+    # Project-specific typedef enums are represented as int in this ABI.
+    if type_name in PRIMITIVES:
+        return PRIMITIVES[type_name]
+    if re.fullmatch(IDENT, type_name) and type_name[0].isupper():
+        return ctypes.c_int
+    raise ValueError(f'Unsupported C type: {type_name}')
+
+
+def is_enum(type_name):
+    return type_name not in PRIMITIVES
+
+
+def read_cases(name, params):
+    path = CASES / (name + '.csv')
+    if not path.is_file():
+        raise ValueError(f'Missing test cases: {path}')
+    with path.open(newline='', encoding='utf-8-sig') as file:
+        reader = csv.DictReader(file)
+        expected = ['testCaseId', *[param for param, _ in params], name]
+        if reader.fieldnames != expected:
+            raise ValueError(f'{name}: CSV columns mismatch\nExpected: {expected}\nActual: {reader.fieldnames}')
         rows = list(reader)
     if not rows:
-        raise ValueError('No test cases found')
+        raise ValueError(f'{name}: empty CSV')
     return rows
 
 
-def enum_values(rows, workdir):
-    """Ask the C compiler for actual enum constants; never assume enum numbering."""
-    names = sorted({row[col].strip() for row in rows for col in ENUM_COLUMNS
-                    if row.get(col)})
+def compile_enum_probe(selected, definitions, cases, workdir):
+    constants = set()
+    for name in selected:
+        ret, params = definitions[name]
+        for row in cases[name]:
+            if None in row or any(value is None for value in row.values()):
+                raise ValueError(f'{name}: malformed CSV row')
+            for col, typ in [*params, (name, ret)]:
+                if is_enum(typ) and row[col].strip():
+                    token = row[col].strip()
+                    if not re.fullmatch(IDENT, token, flags=re.ASCII):
+                        raise ValueError(f'Invalid enum constant: {token!r}')
+                    constants.add(token)
+    if not constants:
+        return {}
     probe = workdir / 'enum_probe.c'
-    executable = workdir / 'enum_probe'
-    lines = ['#include <stdio.h>', '#include "vehicle_control.h"',
-             'int main(void) {']
-    for name in names:
-        # Names are generated only from identifier-shaped CSV tokens.
-        if not name.isascii() or not name.isidentifier():
-            raise ValueError(f'Invalid C enum identifier: {name!r}')
-        lines.append(f'    printf("{name}=%d\\n", (int)({name}));')
-    lines += ['    return 0;', '}']
+    exe = workdir / 'enum_probe'
+    lines = ['#include <stdio.h>']
+    lines += [f'#include "{h.name}"' for h in headers()]
+    lines += ['int main(void) {']
+    lines += [f'printf("{token}=%lld\\n", (long long)({token}));' for token in sorted(constants)]
+    lines += ['return 0;', '}']
     probe.write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    run_gcc(['gcc', '-std=c11', '-I', str(HEADER_DIR), str(probe), '-o', str(executable)])
-    output = subprocess.check_output([str(executable)], text=True)
-    return {name: int(value) for name, value in
-            (line.split('=', 1) for line in output.splitlines())}
+    run(['gcc', '-std=c11', '-I', str(INCLUDE), str(probe), '-o', str(exe)])
+    output = subprocess.check_output([str(exe)], text=True)
+    return {key: int(value) for key, value in (line.split('=', 1) for line in output.splitlines())}
+
+
+def convert(token, typ, enums):
+    token = token.strip()
+    if not token:
+        return 0  # Don't care: use a zero placeholder.
+    if is_enum(typ):
+        return enums[token]
+    value = int(token)
+    if typ in ('unsigned', 'unsigned int'):
+        if not 0 <= value <= 0xffffffff:
+            raise ValueError(f'Out-of-range unsigned int: {value}')
+    elif not -(2**31) <= value < 2**31:
+        raise ValueError(f'Out-of-range int: {value}')
+    return value
+
+
+def test_one(lib, name, definition, rows, enums):
+    ret, params = definition
+    func = getattr(lib, name)
+    func.argtypes = [ctype(typ) for _, typ in params]
+    func.restype = ctype(ret)
+    passed = failed = 0
+    print(f'\n=== {name} ===')
+    for row in rows:
+        case_id = row.get('testCaseId') or '(missing ID)'
+        try:
+            args = [convert(row[col], typ, enums) for col, typ in params]
+            if not row[name].strip():
+                raise ValueError('Missing expected result')
+            expected = convert(row[name], ret, enums)
+            actual = func(*args)
+            if actual == expected:
+                passed += 1
+                print(f'[PASS] {case_id}')
+            else:
+                failed += 1
+                print(f'[FAIL] {case_id}: expected={row[name]} ({expected}), actual={actual}')
+        except (ValueError, KeyError, TypeError) as exc:
+            failed += 1
+            print(f'[FAIL] {case_id}: {exc}')
+    print(f'{name}: Passed={passed}, Failed={failed}')
+    return passed, failed
 
 
 def main():
-    rows = read_cases()
-    with tempfile.TemporaryDirectory(prefix='vehicle_test_') as tmp:
-        workdir = Path(tmp)
-        library = workdir / 'libvehicle_control.so'
-        run_gcc(['gcc', '-std=c11', '-Wall', '-Wextra', '-fPIC', '-shared',
-                 '-I', str(HEADER_DIR), str(SOURCE), '-o', str(library)])
-        values = enum_values(rows, workdir)
-        lib = ctypes.CDLL(str(library))
-        function = lib.ControlWiper
-        function.argtypes = [ctypes.c_int] * 6
-        function.restype = ctypes.c_int
-
-        passed = failed = 0
-        for row in rows:
-            case_id = row.get('testCaseId') or '(missing ID)'
-            try:
-                if None in row or any(value is None for value in row.values()):
-                    raise ValueError('Malformed CSV row')
-
-                def enum(col):
-                    token = row[col].strip()
-                    return values[token] if token else 0  # Don't care placeholder
-
-                def number(col):
-                    token = row[col].strip()
-                    return int(token) if token else 0
-
-                if not row['ControlWiper'].strip():
-                    raise ValueError('Missing expected result')
-                expected = enum('ControlWiper')
-                actual = function(enum('vehicleRxState'), enum('engineState'),
-                                  enum('wiperSwitch'), enum('rainSensorState'),
-                                  number('rainAmount'), number('speed'))
-                if actual == expected:
-                    passed += 1
-                    print(f'[PASS] {case_id}')
-                else:
-                    failed += 1
-                    print(f'[FAIL] {case_id}: expected={row["ControlWiper"]} '
-                          f'({expected}), actual={actual}')
-            except (ValueError, KeyError) as error:
-                failed += 1
-                print(f'[FAIL] {case_id}: {error}')
-        print(f'\nPassed: {passed}, Failed: {failed}')
-        return 1 if failed else 0
+    parser = argparse.ArgumentParser(description='CSV tests for C functions discovered from include/*.h')
+    parser.add_argument('function', nargs='?', default='all', help='Function name or all (default: all)')
+    args = parser.parse_args()
+    definitions = discover()
+    if not definitions:
+        raise ValueError('No function declarations discovered')
+    if args.function != 'all' and args.function not in definitions:
+        parser.error(f'Unknown function {args.function!r}; available: {", ".join(sorted(definitions))}')
+    selected = sorted(definitions) if args.function == 'all' else [args.function]
+    cases = {name: read_cases(name, definitions[name][1]) for name in selected}
+    for name in selected:
+        ret, params = definitions[name]
+        ctype(ret)
+        for _, typ in params:
+            ctype(typ)
+    sources = sorted(SRC.glob('*.c'))
+    if not sources:
+        raise ValueError('No C sources found in src/')
+    with tempfile.TemporaryDirectory(prefix='vehicle_test_') as temp:
+        workdir = Path(temp)
+        lib_path = workdir / 'libvehicle.so'
+        run(['gcc', '-std=c11', '-Wall', '-Wextra', '-fPIC', '-shared',
+             '-I', str(INCLUDE), *map(str, sources), '-o', str(lib_path)])
+        enums = compile_enum_probe(selected, definitions, cases, workdir)
+        lib = ctypes.CDLL(str(lib_path))
+        total_passed = total_failed = 0
+        for name in selected:
+            p, f = test_one(lib, name, definitions[name], cases[name], enums)
+            total_passed += p
+            total_failed += f
+    print(f'\n=== Total Results ===\nPassed: {total_passed}, Failed: {total_failed}')
+    return 1 if total_failed else 0
 
 
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except (OSError, subprocess.CalledProcessError, ValueError) as error:
-        print(f'Test runner error: {error}', file=sys.stderr)
+    except (OSError, ValueError, subprocess.CalledProcessError, AttributeError) as exc:
+        print(f'Test runner error: {exc}', file=sys.stderr)
         sys.exit(2)
