@@ -61,8 +61,8 @@ int main(void) {
 
         unsigned int timeMs;
         int inputSpeed;
-        char gear[16];
-        char engineState[16];
+        char gear[32];
+        char engineState[32];
         int illuminance;
         int rainfall;
         char doorFL[16];
@@ -74,7 +74,7 @@ int main(void) {
 
         int parsed = sscanf(
             line,
-            "%u,%d,%15[^,],%15[^,],%d,%d,%15[^,],%15[^,],%15[^,],%15[^,],%15[^,],%31[^\r\n]",
+            "%u,%d,%31[^,],%31[^,],%d,%d,%15[^,],%15[^,],%15[^,],%15[^,],%15[^,],%31[^\r\n]",
             &timeMs,
             &inputSpeed,
             gear,
