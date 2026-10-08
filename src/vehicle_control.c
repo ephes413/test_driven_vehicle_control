@@ -4,13 +4,14 @@ DoorLockState ControlDoorLock(
     RxState vehicleRxState,
     EngineState engineState,
     Gear gear,
+    SpeedState speedState,
     int speed,
     DoorLockState currentDoorLock
 ) {
     if (vehicleRxState == RX_TIMEOUT) return currentDoorLock;
     if (engineState == ENGINE_OFF) return DOOR_UNLOCKED;
     if (gear == GEAR_P) return DOOR_UNLOCKED;
-    if (speed >= 15) return DOOR_LOCKED;
+    if (speedState == SPEED_VALID && speed >= 15) return DOOR_LOCKED;
     return currentDoorLock;
 }
 

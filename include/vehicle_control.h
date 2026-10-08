@@ -28,6 +28,7 @@ DoorLockState ControlDoorLock(
     RxState vehicleRxState,
     EngineState engineState,
     Gear gear,
+    SpeedState speedState,
     int speed,
     DoorLockState currentDoorLock
 );
