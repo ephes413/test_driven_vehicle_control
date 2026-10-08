@@ -44,4 +44,10 @@ void UpdateVehicleReception(
     VehicleReception *reception
 );
 
+void MonitorVehicleState(
+    const VehicleInput *input,
+    const VehicleReception *reception,
+    VehicleMonitor *monitor
+);
+
 #endif

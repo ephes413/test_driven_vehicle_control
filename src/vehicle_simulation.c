@@ -1,4 +1,5 @@
 #include "vehicle_simulation.h"
+#include "vehicle_monitor.h"
 
 #define RX_TIMEOUT_MS 500U
 #define SPEED_NOT_RECEIVED (-1)
@@ -39,4 +40,44 @@ void UpdateVehicleReception(
     reception->engineRxState =
         (timeMs - reception->lastEngineRxTime >= RX_TIMEOUT_MS)
         ? RX_TIMEOUT : RX_NORMAL;
+}
+
+void MonitorVehicleState(
+    const VehicleInput *input,
+    const VehicleReception *reception,
+    VehicleMonitor *monitor
+) {
+    monitor->vehicleRxState = CheckVehicleStateRx(
+        reception->speedRxState,
+        reception->gearRxState,
+        reception->engineRxState
+    );
+
+    monitor->speedState = CheckSpeedValidity(
+        monitor->vehicleRxState,
+        reception->speed
+    );
+
+    monitor->lightSensorState = CheckLightSensorFault(
+        input->illuminance
+    );
+
+    monitor->rainSensorState = CheckRainSensorFault(
+        input->rainfall
+    );
+
+    monitor->doorOpenWarningState = CheckDoorOpenWhileDriving(
+        monitor->speedState,
+        reception->speed,
+        input->doorFL,
+        input->doorFR,
+        input->doorRL,
+        input->doorRR
+    );
+
+    monitor->clusterWarning = DetermineClusterWarning(
+        monitor->doorOpenWarningState,
+        monitor->lightSensorState,
+        monitor->rainSensorState
+    );
 }
