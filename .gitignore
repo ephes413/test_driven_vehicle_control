@@ -1,0 +1,11 @@
+# Build artifacts
+/vehicle_simulation
+*.o
+*.so
+
+# Python
+__pycache__/
+*.pyc
+
+# Editor
+.vscode/
