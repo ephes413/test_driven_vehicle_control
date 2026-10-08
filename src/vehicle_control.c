@@ -10,7 +10,7 @@ DoorLockState ControlDoorLock(
     if (vehicleRxState == RX_TIMEOUT) return currentDoorLock;
     if (engineState == ENGINE_OFF) return currentDoorLock;
     if (gear == GEAR_P) return currentDoorLock;
-    if (speed >= 15) return DOOR_CLOSED;
+    if (speed >= 15) return DOOR_LOCKED;
     return currentDoorLock;
 }
 
