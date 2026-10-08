@@ -22,7 +22,13 @@ typedef struct {
     WiperSwitch wiperSwitch;
 } VehicleInput;
 
-int ReadVehicleInput(FILE *inputFile, VehicleInput *input);
+typedef enum {
+    READ_ERROR = -1,
+    READ_EOF = 0,
+    READ_SUCCESS = 1
+} ReadResult;
+
+ReadResult ReadVehicleInput(FILE *inputFile, VehicleInput *input);
 
 void WriteVehicleOutput(
     FILE *outputFile,

@@ -60,9 +60,9 @@ int main(void) {
     };
 
     int isFirstCycle = 1;
-    int readResult;
+    ReadResult readResult;
 
-    while ((readResult = ReadVehicleInput(inputFile, &input)) == 1) {
+    while ((readResult = ReadVehicleInput(inputFile, &input)) == READ_SUCCESS) {
 
         /* 1. Update vehicle reception */
         UpdateVehicleReception(
@@ -108,12 +108,12 @@ int main(void) {
         );
     }
 
-    if (readResult == -1) {
+    if (readResult == READ_ERROR) {
         fprintf(stderr, "Failed to read input.csv\n");
     }
 
     fclose(inputFile);
     fclose(outputFile);
 
-    return readResult == -1 ? 1 : 0;
+    return readResult == READ_ERROR ? 1 : 0;
 }

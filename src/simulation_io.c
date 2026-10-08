@@ -54,7 +54,7 @@ static int ParseWiperSwitch(const char *str, WiperSwitch *value) {
     return 1;
 }
 
-int ReadVehicleInput(FILE *inputFile, VehicleInput *input) {
+ReadResult ReadVehicleInput(FILE *inputFile, VehicleInput *input) {
     char line[256];
 
     while (fgets(line, sizeof(line), inputFile) != NULL) {
@@ -142,10 +142,10 @@ int ReadVehicleInput(FILE *inputFile, VehicleInput *input) {
         }
 
         *input = parsedInput;
-        return 1;
+        return READ_SUCCESS;
     }
 
-    return ferror(inputFile) ? -1 : 0;
+    return ferror(inputFile) ? READ_ERROR : READ_EOF;
 }
 
 void WriteVehicleOutput(
