@@ -1,6 +1,7 @@
 #include "vehicle_simulation.h"
 #include "vehicle_monitor.h"
 #include "vehicle_timer.h"
+#include "vehicle_control.h"
 
 #define RX_TIMEOUT_MS 500U
 #define SPEED_NOT_RECEIVED (-1)
@@ -100,5 +101,42 @@ void UpdateVehicleTimers(
     control->wiperActiveTime = UpdateWiperActiveTime(
         control->wiperState,
         control->wiperActiveTime
+    );
+}
+
+void UpdateVehicleControl(
+    const VehicleInput *input,
+    const VehicleReception *reception,
+    const VehicleMonitor *monitor,
+    VehicleControlState *control
+) {
+    control->headLightState = ControlHeadLight(
+        monitor->vehicleRxState,
+        reception->engineState,
+        monitor->lightSensorState,
+        input->lightSwitch,
+        control->wiperActiveTime,
+        control->lowIlluminanceTime,
+        control->highIlluminanceTime,
+        control->headLightState
+    );
+
+    control->wiperState = ControlWiper(
+        monitor->vehicleRxState,
+        reception->engineState,
+        input->wiperSwitch,
+        monitor->rainSensorState,
+        input->rainfall,
+        monitor->speedState,
+        reception->speed
+    );
+
+    control->doorLockState = ControlDoorLock(
+        monitor->vehicleRxState,
+        reception->engineState,
+        reception->gear,
+        monitor->speedState,
+        reception->speed,
+        control->doorLockState
     );
 }

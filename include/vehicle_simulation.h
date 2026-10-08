@@ -55,4 +55,11 @@ void UpdateVehicleTimers(
     VehicleControlState *control
 );
 
+void UpdateVehicleControl(
+    const VehicleInput *input,
+    const VehicleReception *reception,
+    const VehicleMonitor *monitor,
+    VehicleControlState *control
+);
+
 #endif
