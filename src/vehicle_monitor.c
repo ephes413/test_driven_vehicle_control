@@ -13,12 +13,14 @@ SensorState CheckRainSensorFault(int rainAmount) {
 }
 
 DoorOpenWarningState CheckDoorOpenWhileDriving(
+    SpeedState speedState,
     int speed,
     DoorState doorFL,
     DoorState doorFR,
     DoorState doorRL,
     DoorState doorRR
 ) {
+    if (speedState == SPEED_INVALID) return DOOR_OPEN_WARNING_INACTIVE;
     if (speed == 0) return DOOR_OPEN_WARNING_INACTIVE;
     if (doorFL == DOOR_OPEN) return DOOR_OPEN_WARNING_ACTIVE;
     if (doorFR == DOOR_OPEN) return DOOR_OPEN_WARNING_ACTIVE;

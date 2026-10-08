@@ -4,6 +4,7 @@
 #include "vehicle_types.h"
 
 DoorOpenWarningState CheckDoorOpenWhileDriving(
+    SpeedState speedState,
     int speed,
     DoorState doorFL,
     DoorState doorFR,
