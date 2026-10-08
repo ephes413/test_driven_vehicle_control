@@ -25,7 +25,11 @@ int main(void) {
     unsigned int highIlluminanceTime = 0;
     unsigned int wiperActiveTime = 0;
 
+    HeadLightState headLightState = HEADLIGHT_OFF;
     WiperState wiperState = WIPER_STOP;
+    DoorLockState doorLockState = DOOR_UNLOCKED;
+
+    int isFirstCycle = 1;
 
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         /* 1. Update vehicle inputs */
@@ -153,22 +157,56 @@ int main(void) {
 
         /* 4. Update timers */
 
-        lowIlluminanceTime = UpdateLowIlluminanceTime(
-            illuminance,
-            lowIlluminanceTime
-        );
+        if (isFirstCycle) {
+            isFirstCycle = 0;
+        } else {
+            lowIlluminanceTime = UpdateLowIlluminanceTime(
+                illuminance,
+                lowIlluminanceTime
+            );
 
-        highIlluminanceTime = UpdateHighIlluminanceTime(
-            illuminance,
-            highIlluminanceTime
-        );
+            highIlluminanceTime = UpdateHighIlluminanceTime(
+                illuminance,
+                highIlluminanceTime
+            );
 
-        wiperActiveTime = UpdateWiperActiveTime(
-            wiperState,
-            wiperActiveTime
-        );
+            wiperActiveTime = UpdateWiperActiveTime(
+                wiperState,
+                wiperActiveTime
+            );
+        }
 
         /* 5. Control vehicle functions */
+
+        headLightState = ControlHeadLight(
+            vehicleRxState,
+            engineStateValue,
+            lightSensorState,
+            lightSwitchValue,
+            wiperActiveTime,
+            lowIlluminanceTime,
+            highIlluminanceTime,
+            headLightState
+        );
+
+        wiperState = ControlWiper(
+            vehicleRxState,
+            engineStateValue,
+            wiperSwitchValue,
+            rainSensorState,
+            rainfall,
+            speedState,
+            speed
+        );
+
+        doorLockState = ControlDoorLock(
+            vehicleRxState,
+            engineStateValue,
+            gearValue,
+            speedState,
+            speed,
+            doorLockState
+        );
 
         /* 6. Determine cluster warning */
 
