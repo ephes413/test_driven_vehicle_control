@@ -59,6 +59,11 @@ def discover():
             raise ValueError(f'Unbalanced braces: {header}')
         for match in PROTOTYPE.finditer(''.join(top)):
             name = match['name']
+
+            # Discover only functions with corresponding CSV test cases.
+            if not (CASES / f'{name}.csv').is_file():
+                continue
+
             ret = ' '.join(match['ret'].split())
             args = match['args'].strip()
             params = []
@@ -179,7 +184,7 @@ def main():
     args = parser.parse_args()
     definitions = discover()
     if not definitions:
-        raise ValueError('No function declarations discovered')
+        raise ValueError('No testable functions with matching CSV files found')
     if args.function != 'all' and args.function not in definitions:
         parser.error(f'Unknown function {args.function!r}; available: {", ".join(sorted(definitions))}')
     selected = sorted(definitions) if args.function == 'all' else [args.function]
