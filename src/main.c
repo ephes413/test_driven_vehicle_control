@@ -117,6 +117,34 @@ int main(void) {
 
         /* 3. Monitor vehicle and sensor states */
 
+        RxState vehicleRxState = CheckVehicleStateRx(
+            speedRxState,
+            gearRxState,
+            engineRxState
+        );
+
+        SpeedState speedState = CheckSpeedValidity(
+            vehicleRxState,
+            speed
+        );
+
+        SensorState lightSensorState = CheckLightSensorFault(
+            illuminance
+        );
+
+        SensorState rainSensorState = CheckRainSensorFault(
+            rainfall
+        );
+
+        DoorOpenWarningState doorOpenWarningState = CheckDoorOpenWhileDriving(
+            speedState,
+            speed,
+            doorFLValue,
+            doorFRValue,
+            doorRLValue,
+            doorRRValue
+        );
+
         /* 4. Update timers */
 
         /* 5. Control vehicle functions */
