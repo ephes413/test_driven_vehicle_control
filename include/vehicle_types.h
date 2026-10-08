@@ -43,6 +43,12 @@ typedef enum {
     RX_TIMEOUT
 } RxState;
 
+/* 속도 유효성 */
+typedef enum {
+    SPEED_VALID,
+    SPEED_INVALID
+} SpeedState;
+
 /* ==================== 출력 ==================== */
 
 /* 전조등 */

@@ -48,3 +48,9 @@ ClusterWarning DetermineClusterWarning(
     if (rainSensorState == SENSOR_FAULT) return WARNING_RAIN_SENSOR_FAULT;
     return WARNING_NONE;
 }
+
+SpeedState CheckSpeedValidity(int speed) {
+    if (speed < 0) return SPEED_INVALID;
+    if (speed > 250) return SPEED_INVALID;
+    return SPEED_VALID;
+}

@@ -31,4 +31,6 @@ RxState CheckVehicleStateRx(
     RxState engineRxState
 );
 
+SpeedState CheckSpeedValidity(int speed);
+
 #endif
