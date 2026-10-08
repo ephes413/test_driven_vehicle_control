@@ -3,6 +3,7 @@
 #include "vehicle_control.h"
 #include "vehicle_monitor.h"
 #include "vehicle_timer.h"
+#include "simulation_io.h"
 
 int main(void) {
     FILE *inputFile = fopen("simulation/input.csv", "r");
@@ -59,6 +60,36 @@ int main(void) {
         }
 
         /* 2. Validate inputs */
+
+        Gear gearValue;
+        EngineState engineStateValue;
+        DoorState doorFLValue;
+        DoorState doorFRValue;
+        DoorState doorRLValue;
+        DoorState doorRRValue;
+        LightSwitch lightSwitchValue;
+        WiperSwitch wiperSwitchValue;
+
+        if (!ParseGear(gear, &gearValue) ||
+            !ParseEngineState(engineState, &engineStateValue) ||
+            !ParseDoorState(doorFL, &doorFLValue) ||
+            !ParseDoorState(doorFR, &doorFRValue) ||
+            !ParseDoorState(doorRL, &doorRLValue) ||
+            !ParseDoorState(doorRR, &doorRRValue) ||
+            !ParseLightSwitch(lightSwitch, &lightSwitchValue) ||
+            !ParseWiperSwitch(wiperSwitch, &wiperSwitchValue)) {
+
+            fprintf(stderr, "Invalid enum input at %u ms\n", timeMs);
+            continue;
+        }
+
+        /* CSV does not currently provide reception timeout information */
+        RxState vehicleRxState = RX_NORMAL;
+
+        SpeedState speedState = CheckSpeedValidity(
+            vehicleRxState,
+            speed
+        );
 
         /* 3. Monitor vehicle and sensor states */
 
