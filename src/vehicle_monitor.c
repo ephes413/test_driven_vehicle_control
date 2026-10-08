@@ -49,7 +49,11 @@ ClusterWarning DetermineClusterWarning(
     return WARNING_NONE;
 }
 
-SpeedState CheckSpeedValidity(int speed) {
+SpeedState CheckSpeedValidity(
+    RxState vehicleRxState,
+    int speed
+) {
+    if (vehicleRxState == RX_TIMEOUT) return SPEED_INVALID;
     if (speed < 0) return SPEED_INVALID;
     if (speed > 250) return SPEED_INVALID;
     return SPEED_VALID;
