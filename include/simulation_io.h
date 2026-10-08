@@ -22,12 +22,6 @@ typedef struct {
     WiperSwitch wiperSwitch;
 } VehicleInput;
 
-int ParseGear(const char *str, Gear *value);
-int ParseEngineState(const char *str, EngineState *value);
-int ParseDoorState(const char *str, DoorState *value);
-int ParseLightSwitch(const char *str, LightSwitch *value);
-int ParseWiperSwitch(const char *str, WiperSwitch *value);
-
 int ReadVehicleInput(FILE *inputFile, VehicleInput *input);
 
 void WriteVehicleOutput(

@@ -1,7 +1,13 @@
 #include "simulation_io.h"
 #include <string.h>
 
-int ParseGear(const char *str, Gear *value) {
+static int ParseGear(const char *str, Gear *value);
+static int ParseEngineState(const char *str, EngineState *value);
+static int ParseDoorState(const char *str, DoorState *value);
+static int ParseLightSwitch(const char *str, LightSwitch *value);
+static int ParseWiperSwitch(const char *str, WiperSwitch *value);
+
+static int ParseGear(const char *str, Gear *value) {
     if (strcmp(str, "GEAR_P") == 0) *value = GEAR_P;
     else if (strcmp(str, "GEAR_R") == 0) *value = GEAR_R;
     else if (strcmp(str, "GEAR_N") == 0) *value = GEAR_N;
@@ -12,7 +18,7 @@ int ParseGear(const char *str, Gear *value) {
     return 1;
 }
 
-int ParseEngineState(const char *str, EngineState *value) {
+static int ParseEngineState(const char *str, EngineState *value) {
     if (strcmp(str, "ENGINE_OFF") == 0) *value = ENGINE_OFF;
     else if (strcmp(str, "ENGINE_ON") == 0) *value = ENGINE_ON;
     else if (strcmp(str, "ENGINE_NOT_RECEIVED") == 0) *value = ENGINE_NOT_RECEIVED;
@@ -21,7 +27,7 @@ int ParseEngineState(const char *str, EngineState *value) {
     return 1;
 }
 
-int ParseDoorState(const char *str, DoorState *value) {
+static int ParseDoorState(const char *str, DoorState *value) {
     if (strcmp(str, "DOOR_CLOSED") == 0) *value = DOOR_CLOSED;
     else if (strcmp(str, "DOOR_OPEN") == 0) *value = DOOR_OPEN;
     else return 0;
@@ -29,7 +35,7 @@ int ParseDoorState(const char *str, DoorState *value) {
     return 1;
 }
 
-int ParseLightSwitch(const char *str, LightSwitch *value) {
+static int ParseLightSwitch(const char *str, LightSwitch *value) {
     if (strcmp(str, "LIGHT_AUTO") == 0) *value = LIGHT_AUTO;
     else if (strcmp(str, "LIGHT_OFF") == 0) *value = LIGHT_OFF;
     else if (strcmp(str, "LIGHT_ON") == 0) *value = LIGHT_ON;
@@ -38,7 +44,7 @@ int ParseLightSwitch(const char *str, LightSwitch *value) {
     return 1;
 }
 
-int ParseWiperSwitch(const char *str, WiperSwitch *value) {
+static int ParseWiperSwitch(const char *str, WiperSwitch *value) {
     if (strcmp(str, "WIPER_SWITCH_OFF") == 0) *value = WIPER_SWITCH_OFF;
     else if (strcmp(str, "WIPER_SWITCH_AUTO") == 0) *value = WIPER_SWITCH_AUTO;
     else if (strcmp(str, "WIPER_SWITCH_LOW") == 0) *value = WIPER_SWITCH_LOW;
