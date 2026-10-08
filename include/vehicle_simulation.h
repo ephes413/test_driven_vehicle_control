@@ -50,4 +50,9 @@ void MonitorVehicleState(
     VehicleMonitor *monitor
 );
 
+void UpdateVehicleTimers(
+    const VehicleInput *input,
+    VehicleControlState *control
+);
+
 #endif

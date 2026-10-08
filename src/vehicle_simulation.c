@@ -1,5 +1,6 @@
 #include "vehicle_simulation.h"
 #include "vehicle_monitor.h"
+#include "vehicle_timer.h"
 
 #define RX_TIMEOUT_MS 500U
 #define SPEED_NOT_RECEIVED (-1)
@@ -79,5 +80,25 @@ void MonitorVehicleState(
         monitor->doorOpenWarningState,
         monitor->lightSensorState,
         monitor->rainSensorState
+    );
+}
+
+void UpdateVehicleTimers(
+    const VehicleInput *input,
+    VehicleControlState *control
+) {
+    control->lowIlluminanceTime = UpdateLowIlluminanceTime(
+        input->illuminance,
+        control->lowIlluminanceTime
+    );
+
+    control->highIlluminanceTime = UpdateHighIlluminanceTime(
+        input->illuminance,
+        control->highIlluminanceTime
+    );
+
+    control->wiperActiveTime = UpdateWiperActiveTime(
+        control->wiperState,
+        control->wiperActiveTime
     );
 }
