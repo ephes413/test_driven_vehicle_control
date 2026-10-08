@@ -70,26 +70,50 @@ int main(void) {
         LightSwitch lightSwitchValue;
         WiperSwitch wiperSwitchValue;
 
-        if (!ParseGear(gear, &gearValue) ||
-            !ParseEngineState(engineState, &engineStateValue) ||
-            !ParseDoorState(doorFL, &doorFLValue) ||
-            !ParseDoorState(doorFR, &doorFRValue) ||
-            !ParseDoorState(doorRL, &doorRLValue) ||
-            !ParseDoorState(doorRR, &doorRRValue) ||
-            !ParseLightSwitch(lightSwitch, &lightSwitchValue) ||
-            !ParseWiperSwitch(wiperSwitch, &wiperSwitchValue)) {
+        if (!ParseGear(gear, &gearValue)) {
+            fprintf(stderr, "Invalid gear at %u ms: %s\n", timeMs, gear);
+            continue;
+        }
 
-            fprintf(stderr, "Invalid enum input at %u ms\n", timeMs);
+        if (!ParseEngineState(engineState, &engineStateValue)) {
+            fprintf(stderr, "Invalid engineState at %u ms: %s\n", timeMs, engineState);
+            continue;
+        }
+
+        if (!ParseDoorState(doorFL, &doorFLValue)) {
+            fprintf(stderr, "Invalid doorFL at %u ms: %s\n", timeMs, doorFL);
+            continue;
+        }
+
+        if (!ParseDoorState(doorFR, &doorFRValue)) {
+            fprintf(stderr, "Invalid doorFR at %u ms: %s\n", timeMs, doorFR);
+            continue;
+        }
+
+        if (!ParseDoorState(doorRL, &doorRLValue)) {
+            fprintf(stderr, "Invalid doorRL at %u ms: %s\n", timeMs, doorRL);
+            continue;
+        }
+
+        if (!ParseDoorState(doorRR, &doorRRValue)) {
+            fprintf(stderr, "Invalid doorRR at %u ms: %s\n", timeMs, doorRR);
+            continue;
+        }
+
+        if (!ParseLightSwitch(lightSwitch, &lightSwitchValue)) {
+            fprintf(stderr, "Invalid lightSwitch at %u ms: %s\n", timeMs, lightSwitch);
+            continue;
+        }
+
+        if (!ParseWiperSwitch(wiperSwitch, &wiperSwitchValue)) {
+            fprintf(stderr, "Invalid wiperSwitch at %u ms: %s\n", timeMs, wiperSwitch);
             continue;
         }
 
         /* CSV does not currently provide reception timeout information */
-        RxState vehicleRxState = RX_NORMAL;
-
-        SpeedState speedState = CheckSpeedValidity(
-            vehicleRxState,
-            speed
-        );
+        RxState speedRxState = RX_NORMAL;
+        RxState gearRxState = RX_NORMAL;
+        RxState engineRxState = RX_NORMAL;
 
         /* 3. Monitor vehicle and sensor states */
 
