@@ -155,6 +155,12 @@ int main(void) {
             doorRRValue
         );
 
+        ClusterWarning clusterWarning = DetermineClusterWarning(
+            doorOpenWarningState,
+            lightSensorState,
+            rainSensorState
+        );
+
         /* 4. Update timers */
 
         if (isFirstCycle) {
@@ -208,9 +214,7 @@ int main(void) {
             doorLockState
         );
 
-        /* 6. Determine cluster warning */
-
-        /* 7. Update vehicle outputs */
+        /* 6. Update vehicle outputs */
     }
 
     fclose(inputFile);
