@@ -5,6 +5,9 @@
 #include "vehicle_timer.h"
 #include "simulation_io.h"
 
+#define RX_TIMEOUT_MS 500U
+#define SPEED_NOT_RECEIVED (-1)
+
 int main(void) {
     FILE *inputFile = fopen("simulation/input.csv", "r");
 
@@ -43,13 +46,21 @@ int main(void) {
     WiperState wiperState = WIPER_STOP;
     DoorLockState doorLockState = DOOR_UNLOCKED;
 
+    unsigned int lastSpeedRxTime = 0;
+    unsigned int lastGearRxTime = 0;
+    unsigned int lastEngineRxTime = 0;
+
+    int speed = 0;
+    Gear gearValue = GEAR_P;
+    EngineState engineStateValue = ENGINE_OFF;
+
     int isFirstCycle = 1;
 
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         /* 1. Update vehicle inputs */
 
         unsigned int timeMs;
-        int speed;
+        int inputSpeed;
         char gear[16];
         char engineState[16];
         int illuminance;
@@ -65,7 +76,7 @@ int main(void) {
             line,
             "%u,%d,%15[^,],%15[^,],%d,%d,%15[^,],%15[^,],%15[^,],%15[^,],%15[^,],%31[^\r\n]",
             &timeMs,
-            &speed,
+            &inputSpeed,
             gear,
             engineState,
             &illuminance,
@@ -85,8 +96,8 @@ int main(void) {
 
         /* 2. Validate inputs */
 
-        Gear gearValue;
-        EngineState engineStateValue;
+        Gear inputGear;
+        EngineState inputEngine;
         DoorState doorFLValue;
         DoorState doorFRValue;
         DoorState doorRLValue;
@@ -94,12 +105,12 @@ int main(void) {
         LightSwitch lightSwitchValue;
         WiperSwitch wiperSwitchValue;
 
-        if (!ParseGear(gear, &gearValue)) {
+        if (!ParseGear(gear, &inputGear)) {
             fprintf(stderr, "Invalid gear at %u ms: %s\n", timeMs, gear);
             continue;
         }
 
-        if (!ParseEngineState(engineState, &engineStateValue)) {
+        if (!ParseEngineState(engineState, &inputEngine)) {
             fprintf(stderr, "Invalid engineState at %u ms: %s\n", timeMs, engineState);
             continue;
         }
@@ -134,10 +145,36 @@ int main(void) {
             continue;
         }
 
-        /* CSV does not currently provide reception timeout information */
-        RxState speedRxState = RX_NORMAL;
-        RxState gearRxState = RX_NORMAL;
-        RxState engineRxState = RX_NORMAL;
+        /* Update speed reception */
+        if (inputSpeed != SPEED_NOT_RECEIVED) {
+            speed = inputSpeed;
+            lastSpeedRxTime = timeMs;
+        }
+
+        /* Update gear reception */
+        if (inputGear != GEAR_NOT_RECEIVED) {
+            gearValue = inputGear;
+            lastGearRxTime = timeMs;
+        }
+
+        /* Update engine reception */
+        if (inputEngine != ENGINE_NOT_RECEIVED) {
+            engineStateValue = inputEngine;
+            lastEngineRxTime = timeMs;
+        }
+
+        /* Check reception timeout */
+        RxState speedRxState =
+            (timeMs - lastSpeedRxTime >= RX_TIMEOUT_MS)
+            ? RX_TIMEOUT : RX_NORMAL;
+
+        RxState gearRxState =
+            (timeMs - lastGearRxTime >= RX_TIMEOUT_MS)
+            ? RX_TIMEOUT : RX_NORMAL;
+
+        RxState engineRxState =
+            (timeMs - lastEngineRxTime >= RX_TIMEOUT_MS)
+            ? RX_TIMEOUT : RX_NORMAL;
 
         /* 3. Monitor vehicle and sensor states */
 

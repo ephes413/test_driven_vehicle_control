@@ -2,10 +2,11 @@
 #include <string.h>
 
 int ParseGear(const char *str, Gear *value) {
-    if (strcmp(str, "P") == 0) *value = GEAR_P;
-    else if (strcmp(str, "R") == 0) *value = GEAR_R;
-    else if (strcmp(str, "N") == 0) *value = GEAR_N;
-    else if (strcmp(str, "D") == 0) *value = GEAR_D;
+    if (strcmp(str, "GEAR_P") == 0) *value = GEAR_P;
+    else if (strcmp(str, "GEAR_R") == 0) *value = GEAR_R;
+    else if (strcmp(str, "GEAR_N") == 0) *value = GEAR_N;
+    else if (strcmp(str, "GEAR_D") == 0) *value = GEAR_D;
+    else if (strcmp(str, "GEAR_NOT_RECEIVED") == 0) *value = GEAR_NOT_RECEIVED;
     else return 0;
 
     return 1;
@@ -14,6 +15,7 @@ int ParseGear(const char *str, Gear *value) {
 int ParseEngineState(const char *str, EngineState *value) {
     if (strcmp(str, "ENGINE_OFF") == 0) *value = ENGINE_OFF;
     else if (strcmp(str, "ENGINE_ON") == 0) *value = ENGINE_ON;
+    else if (strcmp(str, "ENGINE_NOT_RECEIVED") == 0) *value = ENGINE_NOT_RECEIVED;
     else return 0;
 
     return 1;

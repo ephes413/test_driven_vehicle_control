@@ -3,18 +3,20 @@
 
 /* ==================== 입력 ==================== */
 
-/* 기어 */
+/* Gear */
 typedef enum {
     GEAR_P,
     GEAR_R,
     GEAR_N,
-    GEAR_D
+    GEAR_D,
+    GEAR_NOT_RECEIVED
 } Gear;
 
-/* 시동 */
+/* Engine */
 typedef enum {
     ENGINE_OFF,
-    ENGINE_ON
+    ENGINE_ON,
+    ENGINE_NOT_RECEIVED
 } EngineState;
 
 /* 도어 */
