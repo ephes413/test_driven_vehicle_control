@@ -20,6 +20,7 @@ WiperState ControlWiper(
     WiperSwitch wiperSwitch,
     SensorState rainSensorState,
     int rainAmount,
+    SpeedState speedState,
     int speed
 );
 

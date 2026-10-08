@@ -20,6 +20,7 @@ WiperState ControlWiper(
     WiperSwitch wiperSwitch,
     SensorState rainSensorState,
     int rainAmount,
+    SpeedState speedState,
     int speed
 ) {
     if (vehicleRxState == RX_TIMEOUT) return WIPER_STOP;
@@ -28,7 +29,7 @@ WiperState ControlWiper(
     if (wiperSwitch == WIPER_SWITCH_LOW) return WIPER_LOW;
     if (wiperSwitch == WIPER_SWITCH_HIGH) return WIPER_HIGH;
     if (rainSensorState == SENSOR_FAULT) return WIPER_INTERMITTENT;
-    if (speed == 0) {
+    if (speedState == SPEED_VALID && speed == 0) {
         if (rainAmount >= 70) return WIPER_LOW;
         if (rainAmount >= 40) return WIPER_INTERMITTENT;
         return WIPER_STOP;
