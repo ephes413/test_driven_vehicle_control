@@ -21,6 +21,12 @@ int main(void) {
         return 1;
     }
 
+    unsigned int lowIlluminanceTime = 0;
+    unsigned int highIlluminanceTime = 0;
+    unsigned int wiperActiveTime = 0;
+
+    WiperState wiperState = WIPER_STOP;
+
     while (fgets(line, sizeof(line), inputFile) != NULL) {
         /* 1. Update vehicle inputs */
 
@@ -146,6 +152,21 @@ int main(void) {
         );
 
         /* 4. Update timers */
+
+        lowIlluminanceTime = UpdateLowIlluminanceTime(
+            illuminance,
+            lowIlluminanceTime
+        );
+
+        highIlluminanceTime = UpdateHighIlluminanceTime(
+            illuminance,
+            highIlluminanceTime
+        );
+
+        wiperActiveTime = UpdateWiperActiveTime(
+            wiperState,
+            wiperActiveTime
+        );
 
         /* 5. Control vehicle functions */
 
