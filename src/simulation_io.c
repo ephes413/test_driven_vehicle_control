@@ -48,6 +48,100 @@ int ParseWiperSwitch(const char *str, WiperSwitch *value) {
     return 1;
 }
 
+int ReadVehicleInput(FILE *inputFile, VehicleInput *input) {
+    char line[256];
+
+    while (fgets(line, sizeof(line), inputFile) != NULL) {
+        VehicleInput parsedInput;
+
+        char gear[32];
+        char engineState[32];
+        char doorFL[16];
+        char doorFR[16];
+        char doorRL[16];
+        char doorRR[16];
+        char lightSwitch[16];
+        char wiperSwitch[32];
+
+        int parsed = sscanf(
+            line,
+            "%u,%d,%31[^,],%31[^,],%d,%d,"
+            "%15[^,],%15[^,],%15[^,],%15[^,],"
+            "%15[^,],%31[^\r\n]",
+            &parsedInput.timeMs,
+            &parsedInput.speed,
+            gear,
+            engineState,
+            &parsedInput.illuminance,
+            &parsedInput.rainfall,
+            doorFL,
+            doorFR,
+            doorRL,
+            doorRR,
+            lightSwitch,
+            wiperSwitch
+        );
+
+        if (parsed != 12) {
+            fprintf(stderr, "Invalid CSV row: %s", line);
+            continue;
+        }
+
+        if (!ParseGear(gear, &parsedInput.gear)) {
+            fprintf(stderr, "Invalid gear at %u ms: %s\n",
+                    parsedInput.timeMs, gear);
+            continue;
+        }
+
+        if (!ParseEngineState(engineState, &parsedInput.engineState)) {
+            fprintf(stderr, "Invalid engineState at %u ms: %s\n",
+                    parsedInput.timeMs, engineState);
+            continue;
+        }
+
+        if (!ParseDoorState(doorFL, &parsedInput.doorFL)) {
+            fprintf(stderr, "Invalid doorFL at %u ms: %s\n",
+                    parsedInput.timeMs, doorFL);
+            continue;
+        }
+
+        if (!ParseDoorState(doorFR, &parsedInput.doorFR)) {
+            fprintf(stderr, "Invalid doorFR at %u ms: %s\n",
+                    parsedInput.timeMs, doorFR);
+            continue;
+        }
+
+        if (!ParseDoorState(doorRL, &parsedInput.doorRL)) {
+            fprintf(stderr, "Invalid doorRL at %u ms: %s\n",
+                    parsedInput.timeMs, doorRL);
+            continue;
+        }
+
+        if (!ParseDoorState(doorRR, &parsedInput.doorRR)) {
+            fprintf(stderr, "Invalid doorRR at %u ms: %s\n",
+                    parsedInput.timeMs, doorRR);
+            continue;
+        }
+
+        if (!ParseLightSwitch(lightSwitch, &parsedInput.lightSwitch)) {
+            fprintf(stderr, "Invalid lightSwitch at %u ms: %s\n",
+                    parsedInput.timeMs, lightSwitch);
+            continue;
+        }
+
+        if (!ParseWiperSwitch(wiperSwitch, &parsedInput.wiperSwitch)) {
+            fprintf(stderr, "Invalid wiperSwitch at %u ms: %s\n",
+                    parsedInput.timeMs, wiperSwitch);
+            continue;
+        }
+
+        *input = parsedInput;
+        return 1;
+    }
+
+    return ferror(inputFile) ? -1 : 0;
+}
+
 void WriteVehicleOutput(
     FILE *outputFile,
     unsigned int timeMs,
