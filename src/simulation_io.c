@@ -45,3 +45,58 @@ int ParseWiperSwitch(const char *str, WiperSwitch *value) {
 
     return 1;
 }
+
+void WriteVehicleOutput(
+    FILE *outputFile,
+    unsigned int timeMs,
+    HeadLightState headLightState,
+    SensorState lightSensorState,
+    WiperState wiperState,
+    SensorState rainSensorState,
+    DoorLockState doorLockState,
+    ClusterWarning clusterWarning
+) {
+    const char *headLightStr =
+        headLightState == HEADLIGHT_ON ? "HEADLIGHT_ON" : "HEADLIGHT_OFF";
+
+    const char *lightSensorStr =
+        lightSensorState == SENSOR_FAULT ? "SENSOR_FAULT" : "SENSOR_NORMAL";
+
+    const char *wiperStr;
+    switch (wiperState) {
+        case WIPER_STOP:         wiperStr = "WIPER_STOP"; break;
+        case WIPER_INTERMITTENT: wiperStr = "WIPER_INTERMITTENT"; break;
+        case WIPER_LOW:          wiperStr = "WIPER_LOW"; break;
+        case WIPER_HIGH:         wiperStr = "WIPER_HIGH"; break;
+        default:                 wiperStr = "UNKNOWN"; break;
+    }
+
+    const char *rainSensorStr =
+        rainSensorState == SENSOR_FAULT ? "SENSOR_FAULT" : "SENSOR_NORMAL";
+
+    const char *doorLockStr =
+        doorLockState == DOOR_LOCKED ? "DOOR_LOCKED" : "DOOR_UNLOCKED";
+
+    const char *warningStr;
+    switch (clusterWarning) {
+        case WARNING_NONE:              warningStr = "WARNING_NONE"; break;
+        case WARNING_DOOR_OPEN:         warningStr = "WARNING_DOOR_OPEN"; break;
+        case WARNING_LIGHT_SENSOR_FAULT:
+            warningStr = "WARNING_LIGHT_SENSOR_FAULT"; break;
+        case WARNING_RAIN_SENSOR_FAULT:
+            warningStr = "WARNING_RAIN_SENSOR_FAULT"; break;
+        default:                        warningStr = "UNKNOWN"; break;
+    }
+
+    fprintf(
+        outputFile,
+        "%u,%s,%s,%s,%s,%s,%s\n",
+        timeMs,
+        headLightStr,
+        lightSensorStr,
+        wiperStr,
+        rainSensorStr,
+        doorLockStr,
+        warningStr
+    );
+}

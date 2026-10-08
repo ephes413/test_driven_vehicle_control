@@ -21,6 +21,20 @@ int main(void) {
         return 1;
     }
 
+    FILE *outputFile = fopen("simulation/output.csv", "w");
+
+    if (outputFile == NULL) {
+        perror("Failed to open output.csv");
+        fclose(inputFile);
+        return 1;
+    }
+
+    fprintf(
+        outputFile,
+        "timeMs,headLightState,lightSensorState,wiperState,"
+        "rainSensorState,doorLockState,clusterWarning\n"
+    );
+
     unsigned int lowIlluminanceTime = 0;
     unsigned int highIlluminanceTime = 0;
     unsigned int wiperActiveTime = 0;
@@ -45,11 +59,11 @@ int main(void) {
         char doorRL[16];
         char doorRR[16];
         char lightSwitch[16];
-        char wiperSwitch[16];
+        char wiperSwitch[32];
 
         int parsed = sscanf(
             line,
-            "%u,%d,%15[^,],%15[^,],%d,%d,%15[^,],%15[^,],%15[^,],%15[^,],%15[^,],%15[^\r\n]",
+            "%u,%d,%15[^,],%15[^,],%d,%d,%15[^,],%15[^,],%15[^,],%15[^,],%15[^,],%31[^\r\n]",
             &timeMs,
             &speed,
             gear,
@@ -215,9 +229,21 @@ int main(void) {
         );
 
         /* 6. Update vehicle outputs */
+
+        WriteVehicleOutput(
+            outputFile,
+            timeMs,
+            headLightState,
+            lightSensorState,
+            wiperState,
+            rainSensorState,
+            doorLockState,
+            clusterWarning
+        );
     }
 
     fclose(inputFile);
+    fclose(outputFile);
 
     return 0;
 }
