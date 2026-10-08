@@ -2,7 +2,7 @@
 
 SensorState CheckLightSensorFault(int illuminance) {
     if (illuminance < 0) return SENSOR_FAULT;
-    if (illuminance > 60000) SENSOR_FAULT;
+    if (illuminance > 60000) return SENSOR_FAULT;
     return SENSOR_NORMAL;
 }
 
