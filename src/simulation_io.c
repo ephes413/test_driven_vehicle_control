@@ -1,11 +1,30 @@
 #include "simulation_io.h"
 #include <string.h>
 
+#define COMMAND_FILE "simulation/command.csv"
+#define STATUS_FILE  "simulation/status.csv"
+#define TEMP_FILE    "simulation/status.tmp"
+#define RESULT_FILE  "simulation/result.csv"
+
 static int ParseGear(const char *str, GearState *value);
 static int ParseEngineState(const char *str, EngineState *value);
 static int ParseDoorState(const char *str, DoorState *value);
 static int ParseLightSwitch(const char *str, LightSwitch *value);
 static int ParseWiperSwitch(const char *str, WiperSwitch *value);
+static int ParseEngineCommand(
+    const char *str,
+    EngineCommand *value
+);
+
+static int ParseGearCommand(
+    const char *str,
+    GearCommand *value
+);
+
+static int ParsePedalCommand(
+    const char *str,
+    PedalCommand *value
+);
 
 static int ParseGear(const char *str, GearState *value) {
     if (strcmp(str, "GEAR_P") == 0) *value = GEAR_P;
@@ -54,11 +73,130 @@ static int ParseWiperSwitch(const char *str, WiperSwitch *value) {
     return 1;
 }
 
-ReadResult ReadVehicleInput(FILE *inputFile, VehicleInput *input) {
+static int ParseEngineCommand(
+    const char *str,
+    EngineCommand *value
+) {
+    if (strcmp(str, "ENGINE_CMD_OFF") == 0)
+        *value = ENGINE_CMD_OFF;
+    else if (strcmp(str, "ENGINE_CMD_ON") == 0)
+        *value = ENGINE_CMD_ON;
+    else
+        return 0;
+
+    return 1;
+}
+
+static int ParseGearCommand(
+    const char *str,
+    GearCommand *value
+) {
+    if (strcmp(str, "GEAR_CMD_P") == 0)
+        *value = GEAR_CMD_P;
+    else if (strcmp(str, "GEAR_CMD_R") == 0)
+        *value = GEAR_CMD_R;
+    else if (strcmp(str, "GEAR_CMD_N") == 0)
+        *value = GEAR_CMD_N;
+    else if (strcmp(str, "GEAR_CMD_D") == 0)
+        *value = GEAR_CMD_D;
+    else
+        return 0;
+
+    return 1;
+}
+
+static int ParsePedalCommand(
+    const char *str,
+    PedalCommand *value
+) {
+    if (strcmp(str, "PEDAL_RELEASED") == 0)
+        *value = PEDAL_RELEASED;
+    else if (strcmp(str, "PEDAL_PRESSED") == 0)
+        *value = PEDAL_PRESSED;
+    else
+        return 0;
+
+    return 1;
+}
+
+ReadResult ReadVehicleCommand(
+    FILE *commandFile,
+    VehicleCommand *command
+) {
     char line[256];
 
-    while (fgets(line, sizeof(line), inputFile) != NULL) {
-        VehicleInput parsedInput;
+    if (fgets(line, sizeof(line), commandFile) == NULL) {
+        return ferror(commandFile) ? READ_ERROR : READ_EOF;
+    }
+
+    VehicleCommand parsedCommand;
+
+    char engineCommand[32];
+    char gearCommand[32];
+    char brakeCommand[32];
+    char acceleratorCommand[32];
+
+    int parsed = sscanf(
+        line,
+        " %u,%31[^,],%31[^,],%31[^,],%31[^\r\n]",
+        &parsedCommand.timeMs,
+        engineCommand,
+        gearCommand,
+        brakeCommand,
+        acceleratorCommand
+    );
+
+    if (parsed != 5) {
+        fprintf(stderr, "Invalid command CSV row: %s", line);
+        return READ_ERROR;
+    }
+
+    if (!ParseEngineCommand(
+        engineCommand,
+        &parsedCommand.engineCommand
+    )) {
+        fprintf(stderr, "Invalid engineCommand: %s\n", engineCommand);
+        return READ_ERROR;
+    }
+
+    if (!ParseGearCommand(
+        gearCommand,
+        &parsedCommand.gearCommand
+    )) {
+        fprintf(stderr, "Invalid gearCommand: %s\n", gearCommand);
+        return READ_ERROR;
+    }
+
+    if (!ParsePedalCommand(
+        brakeCommand,
+        &parsedCommand.brakeCommand
+    )) {
+        fprintf(stderr, "Invalid brakeCommand: %s\n", brakeCommand);
+        return READ_ERROR;
+    }
+
+    if (!ParsePedalCommand(
+        acceleratorCommand,
+        &parsedCommand.acceleratorCommand
+    )) {
+        fprintf(
+            stderr,
+            "Invalid acceleratorCommand: %s\n",
+            acceleratorCommand
+        );
+        return READ_ERROR;
+    }
+
+    *command = parsedCommand;
+
+    return READ_SUCCESS;
+}
+
+ReadResult ReadVehicleStatus(FILE *statusFile, VehicleStatus *status) {
+    char line[256];
+
+    while (fgets(line, sizeof(line), statusFile) != NULL) {
+        VehicleStatus parsedStatus;
 
         char gear[32];
         char engineState[32];
@@ -74,12 +212,12 @@ ReadResult ReadVehicleInput(FILE *inputFile, VehicleInput *input) {
             "%u,%d,%31[^,],%31[^,],%d,%d,"
             "%15[^,],%15[^,],%15[^,],%15[^,],"
             "%15[^,],%31[^\r\n]",
-            &parsedInput.timeMs,
-            &parsedInput.speed,
+            &parsedStatus.timeMs,
+            &parsedStatus.speed,
             gear,
             engineState,
-            &parsedInput.illuminance,
-            &parsedInput.rainfall,
+            &parsedStatus.illuminance,
+            &parsedStatus.rainfall,
             doorFL,
             doorFR,
             doorRL,
@@ -90,62 +228,145 @@ ReadResult ReadVehicleInput(FILE *inputFile, VehicleInput *input) {
 
         if (parsed != 12) {
             fprintf(stderr, "Invalid CSV row: %s", line);
-            continue;
+            return READ_ERROR;
         }
 
-        if (!ParseGear(gear, &parsedInput.gear)) {
+        if (!ParseGear(gear, &parsedStatus.gear)) {
             fprintf(stderr, "Invalid gear at %u ms: %s\n",
-                    parsedInput.timeMs, gear);
-            continue;
+                    parsedStatus.timeMs, gear);
+            return READ_ERROR;
         }
 
-        if (!ParseEngineState(engineState, &parsedInput.engineState)) {
+        if (!ParseEngineState(engineState, &parsedStatus.engineState)) {
             fprintf(stderr, "Invalid engineState at %u ms: %s\n",
-                    parsedInput.timeMs, engineState);
-            continue;
+                    parsedStatus.timeMs, engineState);
+            return READ_ERROR;
         }
 
-        if (!ParseDoorState(doorFL, &parsedInput.doorFL)) {
+        if (!ParseDoorState(doorFL, &parsedStatus.doorFL)) {
             fprintf(stderr, "Invalid doorFL at %u ms: %s\n",
-                    parsedInput.timeMs, doorFL);
-            continue;
+                    parsedStatus.timeMs, doorFL);
+            return READ_ERROR;
         }
 
-        if (!ParseDoorState(doorFR, &parsedInput.doorFR)) {
+        if (!ParseDoorState(doorFR, &parsedStatus.doorFR)) {
             fprintf(stderr, "Invalid doorFR at %u ms: %s\n",
-                    parsedInput.timeMs, doorFR);
-            continue;
+                    parsedStatus.timeMs, doorFR);
+            return READ_ERROR;
         }
 
-        if (!ParseDoorState(doorRL, &parsedInput.doorRL)) {
+        if (!ParseDoorState(doorRL, &parsedStatus.doorRL)) {
             fprintf(stderr, "Invalid doorRL at %u ms: %s\n",
-                    parsedInput.timeMs, doorRL);
-            continue;
+                    parsedStatus.timeMs, doorRL);
+            return READ_ERROR;
         }
 
-        if (!ParseDoorState(doorRR, &parsedInput.doorRR)) {
+        if (!ParseDoorState(doorRR, &parsedStatus.doorRR)) {
             fprintf(stderr, "Invalid doorRR at %u ms: %s\n",
-                    parsedInput.timeMs, doorRR);
-            continue;
+                    parsedStatus.timeMs, doorRR);
+            return READ_ERROR;
         }
 
-        if (!ParseLightSwitch(lightSwitch, &parsedInput.lightSwitch)) {
+        if (!ParseLightSwitch(lightSwitch, &parsedStatus.lightSwitch)) {
             fprintf(stderr, "Invalid lightSwitch at %u ms: %s\n",
-                    parsedInput.timeMs, lightSwitch);
-            continue;
+                    parsedStatus.timeMs, lightSwitch);
+            return READ_ERROR;
         }
 
-        if (!ParseWiperSwitch(wiperSwitch, &parsedInput.wiperSwitch)) {
+        if (!ParseWiperSwitch(wiperSwitch, &parsedStatus.wiperSwitch)) {
             fprintf(stderr, "Invalid wiperSwitch at %u ms: %s\n",
-                    parsedInput.timeMs, wiperSwitch);
-            continue;
+                    parsedStatus.timeMs, wiperSwitch);
+            return READ_ERROR;
         }
 
-        *input = parsedInput;
+        *status = parsedStatus;
         return READ_SUCCESS;
     }
 
-    return ferror(inputFile) ? READ_ERROR : READ_EOF;
+    return ferror(statusFile) ? READ_ERROR : READ_EOF;
+}
+
+void WriteVehicleStatus(
+    FILE *statusFile,
+    const VehicleStatus *status
+) {
+    const char *gearStr;
+
+    switch (status->gear) {
+        case GEAR_P:            gearStr = "GEAR_P"; break;
+        case GEAR_R:            gearStr = "GEAR_R"; break;
+        case GEAR_N:            gearStr = "GEAR_N"; break;
+        case GEAR_D:            gearStr = "GEAR_D"; break;
+        case GEAR_NOT_RECEIVED: gearStr = "GEAR_NOT_RECEIVED"; break;
+        default:                gearStr = "UNKNOWN"; break;
+    }
+
+    const char *engineStr;
+
+    switch (status->engineState) {
+        case ENGINE_OFF:          engineStr = "ENGINE_OFF"; break;
+        case ENGINE_ON:           engineStr = "ENGINE_ON"; break;
+        case ENGINE_NOT_RECEIVED: engineStr = "ENGINE_NOT_RECEIVED"; break;
+        default:                  engineStr = "UNKNOWN"; break;
+    }
+
+    const char *doorFLStr =
+        status->doorFL == DOOR_OPEN ? "DOOR_OPEN" : "DOOR_CLOSED";
+
+    const char *doorFRStr =
+        status->doorFR == DOOR_OPEN ? "DOOR_OPEN" : "DOOR_CLOSED";
+
+    const char *doorRLStr =
+        status->doorRL == DOOR_OPEN ? "DOOR_OPEN" : "DOOR_CLOSED";
+
+    const char *doorRRStr =
+        status->doorRR == DOOR_OPEN ? "DOOR_OPEN" : "DOOR_CLOSED";
+
+    const char *lightSwitchStr;
+
+    switch (status->lightSwitch) {
+        case LIGHT_AUTO: lightSwitchStr = "LIGHT_AUTO"; break;
+        case LIGHT_OFF:  lightSwitchStr = "LIGHT_OFF"; break;
+        case LIGHT_ON:   lightSwitchStr = "LIGHT_ON"; break;
+        default:         lightSwitchStr = "UNKNOWN"; break;
+    }
+
+    const char *wiperSwitchStr;
+
+    switch (status->wiperSwitch) {
+        case WIPER_SWITCH_OFF:
+            wiperSwitchStr = "WIPER_SWITCH_OFF";
+            break;
+        case WIPER_SWITCH_AUTO:
+            wiperSwitchStr = "WIPER_SWITCH_AUTO";
+            break;
+        case WIPER_SWITCH_LOW:
+            wiperSwitchStr = "WIPER_SWITCH_LOW";
+            break;
+        case WIPER_SWITCH_HIGH:
+            wiperSwitchStr = "WIPER_SWITCH_HIGH";
+            break;
+        default:
+            wiperSwitchStr = "UNKNOWN";
+            break;
+    }
+
+    fprintf(
+        statusFile,
+        "%u,%d,%s,%s,%d,%d,%s,%s,%s,%s,%s,%s\n",
+        status->timeMs,
+        status->speed,
+        gearStr,
+        engineStr,
+        status->illuminance,
+        status->rainfall,
+        doorFLStr,
+        doorFRStr,
+        doorRLStr,
+        doorRRStr,
+        lightSwitchStr,
+        wiperSwitchStr
+    );
 }
 
 void WriteVehicleOutput(
@@ -201,4 +422,132 @@ void WriteVehicleOutput(
         doorLockStr,
         warningStr
     );
+}
+
+int OpenDrivingFiles(DrivingFiles *files) {
+    char line[512];
+
+    *files = (DrivingFiles){0};
+
+    files->commandFile = fopen(COMMAND_FILE, "r");
+    if (files->commandFile == NULL) {
+        perror("Failed to open command.csv");
+        return 1;
+    }
+
+    files->statusFile = fopen(STATUS_FILE, "r");
+    if (files->statusFile == NULL) {
+        perror("Failed to open status.csv");
+        CloseDrivingFiles(files, 0);
+        return 1;
+    }
+
+    files->tempFile = fopen(TEMP_FILE, "w");
+    if (files->tempFile == NULL) {
+        perror("Failed to open status.tmp");
+        CloseDrivingFiles(files, 0);
+        return 1;
+    }
+
+    if (fgets(line, sizeof(line), files->commandFile) == NULL ||
+        fgets(line, sizeof(line), files->statusFile) == NULL) {
+        fprintf(stderr, "Failed to read CSV headers\n");
+        CloseDrivingFiles(files, 0);
+        return 1;
+    }
+
+    if (fprintf(
+        files->tempFile,
+        "timeMs,speed,gear,engineState,illuminance,rainfall,"
+        "doorFL,doorFR,doorRL,doorRR,lightSwitch,wiperSwitch\n"
+    ) < 0) {
+        CloseDrivingFiles(files, 0);
+        return 1;
+    }
+
+    return 0;
+}
+
+int CloseDrivingFiles(DrivingFiles *files, int success) {
+    int error = !success;
+
+    if (files->commandFile != NULL) {
+        if (fclose(files->commandFile) != 0) error = 1;
+        files->commandFile = NULL;
+    }
+
+    if (files->statusFile != NULL) {
+        if (fclose(files->statusFile) != 0) error = 1;
+        files->statusFile = NULL;
+    }
+
+    if (files->tempFile != NULL) {
+        if (fclose(files->tempFile) != 0) error = 1;
+        files->tempFile = NULL;
+    }
+
+    if (error) {
+        remove(TEMP_FILE);
+        return 1;
+    }
+
+    if (rename(TEMP_FILE, STATUS_FILE) != 0) {
+        perror("Failed to replace status.csv");
+        remove(TEMP_FILE);
+        return 1;
+    }
+
+    return 0;
+}
+
+int OpenControlFiles(ControlFiles *files) {
+    char line[512];
+
+    *files = (ControlFiles){0};
+
+    files->statusFile = fopen(STATUS_FILE, "r");
+    if (files->statusFile == NULL) {
+        perror("Failed to open status.csv");
+        return 1;
+    }
+
+    if (fgets(line, sizeof(line), files->statusFile) == NULL) {
+        fprintf(stderr, "Failed to read status.csv header\n");
+        CloseControlFiles(files);
+        return 1;
+    }
+
+    files->resultFile = fopen(RESULT_FILE, "w");
+    if (files->resultFile == NULL) {
+        perror("Failed to open result.csv");
+        CloseControlFiles(files);
+        return 1;
+    }
+
+    if (fprintf(
+        files->resultFile,
+        "timeMs,headLightState,lightSensorState,wiperState,"
+        "rainSensorState,doorLockState,clusterWarning\n"
+    ) < 0) {
+        CloseControlFiles(files);
+        return 1;
+    }
+
+    return 0;
+}
+
+int CloseControlFiles(ControlFiles *files) {
+    int error = 0;
+
+    if (files->statusFile != NULL) {
+        if (fclose(files->statusFile) != 0) error = 1;
+        files->statusFile = NULL;
+    }
+
+    if (files->resultFile != NULL) {
+        if (fclose(files->resultFile) != 0) error = 1;
+        files->resultFile = NULL;
+    }
+
+    return error;
 }

@@ -40,26 +40,29 @@ typedef struct {
 } VehicleControlState;
 
 void UpdateVehicleReception(
-    const VehicleInput *input,
+    const VehicleStatus *input,
     VehicleReception *reception
 );
 
 void MonitorVehicleState(
-    const VehicleInput *input,
+    const VehicleStatus *input,
     const VehicleReception *reception,
     VehicleMonitor *monitor
 );
 
 void UpdateVehicleTimers(
-    const VehicleInput *input,
+    const VehicleStatus *input,
     VehicleControlState *control
 );
 
 void UpdateVehicleControl(
-    const VehicleInput *input,
+    const VehicleStatus *input,
     const VehicleReception *reception,
     const VehicleMonitor *monitor,
     VehicleControlState *control
 );
+
+int RunDrivingSimulation(void);
+int RunControlSimulation(void);
 
 #endif

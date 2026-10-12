@@ -20,7 +20,16 @@ typedef struct {
 
     LightSwitch lightSwitch;
     WiperSwitch wiperSwitch;
-} VehicleInput;
+} VehicleStatus;
+
+typedef struct {
+    unsigned int timeMs;
+
+    EngineCommand engineCommand;
+    GearCommand gearCommand;
+    PedalCommand brakeCommand;
+    PedalCommand acceleratorCommand;
+} VehicleCommand;
 
 typedef enum {
     READ_ERROR = -1,
@@ -28,7 +37,33 @@ typedef enum {
     READ_SUCCESS = 1
 } ReadResult;
 
-ReadResult ReadVehicleInput(FILE *inputFile, VehicleInput *input);
+typedef struct {
+    FILE *commandFile;
+    FILE *statusFile;
+    FILE *tempFile;
+} DrivingFiles;
+
+typedef struct {
+    FILE *statusFile;
+    FILE *resultFile;
+} ControlFiles;
+
+/* CSV input */
+ReadResult ReadVehicleCommand(
+    FILE *commandFile,
+    VehicleCommand *command
+);
+
+ReadResult ReadVehicleStatus(
+    FILE *statusFile,
+    VehicleStatus *status
+);
+
+/* CSV output */
+void WriteVehicleStatus(
+    FILE *statusFile,
+    const VehicleStatus *status
+);
 
 void WriteVehicleOutput(
     FILE *outputFile,
@@ -40,5 +75,11 @@ void WriteVehicleOutput(
     DoorLockState doorLockState,
     ClusterWarning clusterWarning
 );
+
+int OpenDrivingFiles(DrivingFiles *files);
+int CloseDrivingFiles(DrivingFiles *files, int success);
+
+int OpenControlFiles(ControlFiles *files);
+int CloseControlFiles(ControlFiles *files);
 
 #endif
