@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include "simulation_io.h"
 #include "vehicle_simulation.h"
