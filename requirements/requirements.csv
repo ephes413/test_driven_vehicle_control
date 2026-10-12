@@ -17,3 +17,6 @@ D4,Warning,"유효한 속도가 0보다 크고 문이 하나라도 열려 있으
 D5,Warning,경고는 하나만 표시: 주행 중 도어 열림 > 조도 센서 고장 > 강우 센서 고장. 없으면 표시하지 않는다.,Required,Test,
 R1,Driving,시동이 꺼져 있으면 차는 움직이지 않는다. 시동은 정지 상태에서만 켜고 끌 수 있다.,Optional,Demonstration,1
 R2,Driving,기어 변경은 정지 상태(속도 0)에서만 된다.,Optional,Demonstration,2
+R3,Driving,D에서 가속하면 속도가 오르고 R에서 가속하면 후진한다. P·N에서는 움직이지 않는다.,Optional,Demonstration,3
+R4,Driving,브레이크를 밟으면 속도가 줄어 0에서 멈추고 가속과 브레이크가 모두 없으면 천천히 줄어든다. 가속과 브레이크가 함께 입력되면 브레이크가 우선한다.,Optional,Demonstration,4
+R5,Driving,최고 속도는 전진 250 km/h 후진 20 km/h이다. 속도 변화량은 가속 5 km/h 제동 5 km/h 자연 감속 1 km/h로 정의한다.,Optional,Demonstration,5

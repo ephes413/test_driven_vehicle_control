@@ -15,4 +15,12 @@ GearState ControlGear(
     GearCommand gearCommand
 );
 
+int UpdateVehicleSpeed(
+    EngineState engineState,
+    GearState gear,
+    PedalCommand brakeCommand,
+    PedalCommand acceleratorCommand,
+    int currentSpeed
+);
+
 #endif
