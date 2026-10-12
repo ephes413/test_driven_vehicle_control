@@ -1,4 +1,7 @@
 #include "simulation_io.h"
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define COMMAND_FILE "simulation/command.csv"
@@ -6,6 +9,7 @@
 #define TEMP_FILE    "simulation/status.tmp"
 #define RESULT_FILE  "simulation/result.csv"
 
+static int ParseSpeed(const char *str, int *speed);
 static int ParseGear(const char *str, GearState *value);
 static int ParseEngineState(const char *str, EngineState *value);
 static int ParseDoorState(const char *str, DoorState *value);
@@ -25,6 +29,31 @@ static int ParsePedalCommand(
     const char *str,
     PedalCommand *value
 );
+
+static int ParseSpeed(const char *str, int *speed) {
+    if (strcmp(str, "SPEED_NOT_RECEIVED") == 0) {
+        *speed = SPEED_NOT_RECEIVED;
+        return 1;
+    }
+
+    char *end;
+    long value;
+
+    errno = 0;
+    value = strtol(str, &end, 10);
+
+    if (errno == ERANGE ||
+        end == str ||
+        *end != '\0' ||
+        value < INT_MIN ||
+        value > INT_MAX ||
+        value == SPEED_NOT_RECEIVED) {
+        return 0;
+    }
+
+    *speed = (int)value;
+    return 1;
+}
 
 static int ParseGear(const char *str, GearState *value) {
     if (strcmp(str, "GEAR_P") == 0) *value = GEAR_P;
@@ -198,6 +227,7 @@ ReadResult ReadVehicleStatus(FILE *statusFile, VehicleStatus *status) {
     while (fgets(line, sizeof(line), statusFile) != NULL) {
         VehicleStatus parsedStatus;
 
+        char speed[32];
         char gear[32];
         char engineState[32];
         char doorFL[16];
@@ -209,11 +239,11 @@ ReadResult ReadVehicleStatus(FILE *statusFile, VehicleStatus *status) {
 
         int parsed = sscanf(
             line,
-            "%u,%d,%31[^,],%31[^,],%d,%d,"
+            "%u,%31[^,],%31[^,],%31[^,],%d,%d,"
             "%15[^,],%15[^,],%15[^,],%15[^,],"
             "%15[^,],%31[^\r\n]",
             &parsedStatus.timeMs,
-            &parsedStatus.speed,
+            speed,
             gear,
             engineState,
             &parsedStatus.illuminance,
@@ -228,6 +258,12 @@ ReadResult ReadVehicleStatus(FILE *statusFile, VehicleStatus *status) {
 
         if (parsed != 12) {
             fprintf(stderr, "Invalid CSV row: %s", line);
+            return READ_ERROR;
+        }
+
+        if (!ParseSpeed(speed, &parsedStatus.speed)) {
+            fprintf(stderr, "Invalid speed at %u ms: %s\n",
+                parsedStatus.timeMs, speed);
             return READ_ERROR;
         }
 
@@ -290,6 +326,16 @@ void WriteVehicleStatus(
     FILE *statusFile,
     const VehicleStatus *status
 ) {
+    const char *speedStr = NULL;
+    char speedBuffer[32];
+
+    if (status->speed == SPEED_NOT_RECEIVED) {
+        speedStr = "SPEED_NOT_RECEIVED";
+    } else {
+        snprintf(speedBuffer, sizeof(speedBuffer), "%d", status->speed);
+        speedStr = speedBuffer;
+    }
+
     const char *gearStr;
 
     switch (status->gear) {
@@ -353,9 +399,9 @@ void WriteVehicleStatus(
 
     fprintf(
         statusFile,
-        "%u,%d,%s,%s,%d,%d,%s,%s,%s,%s,%s,%s\n",
+        "%u,%s,%s,%s,%d,%d,%s,%s,%s,%s,%s,%s\n",
         status->timeMs,
-        status->speed,
+        speedStr,
         gearStr,
         engineStr,
         status->illuminance,

@@ -1,6 +1,8 @@
 #ifndef VEHICLE_TYPES_H
 #define VEHICLE_TYPES_H
 
+#define SPEED_NOT_RECEIVED INT_MIN
+
 /* 시동 조작 */
 typedef enum {
     ENGINE_CMD_OFF,
