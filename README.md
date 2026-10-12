@@ -1,8 +1,6 @@
 # Test-Driven Vehicle Control
 
-A vehicle control software project developed and verified using test cases derived from vehicle control requirements.
-
-The project implements vehicle monitoring and control functions in C, with automated unit and integration testing using Python and CSV files.
+A C-based vehicle control simulation developed and verified using requirements-derived test cases. Python test tools execute CSV-driven unit tests, end-to-end integration tests, requirement-linked tests, and traceability-based change impact analysis.
 
 ## Project Structure
 
@@ -27,9 +25,15 @@ test_driven_vehicle_control/
 ├── simulation/
 │   ├── input.csv
 │   └── output.csv
+├── requirements/
+│   └── requirements.csv
+├── traceability/
+│   └── traceability.csv
 ├── test/
-│   ├── test_driver.py
+│   ├── test_unit.py
 │   ├── test_integration.py
+│   ├── test_requirement.py
+│   ├── analyze_impact.py
 │   ├── expected_output.csv
 │   └── testcases/
 │       ├── ControlHeadLight.csv
@@ -49,119 +53,83 @@ test_driven_vehicle_control/
 
 ## Vehicle Simulation
 
-The vehicle simulation reads input data from a CSV file, processes vehicle and sensor states, executes control functions, and writes the results to an output CSV file.
+The simulation reads vehicle and sensor inputs from `simulation/input.csv`, processes control logic, and writes results to `simulation/output.csv`.
 
-### Simulation Procedure
+### Execution Flow
 
-Each simulation cycle executes the following steps:
+Each cycle follows these steps:
 
-1. Read and validate vehicle inputs using `ReadVehicleInput()`.
-2. Update received vehicle data and reception timeout states using `UpdateVehicleReception()`.
-3. Monitor vehicle and sensor states using `MonitorVehicleState()`.
-4. Update control timers using `UpdateVehicleTimers()`.
-5. Execute vehicle control functions using `UpdateVehicleControl()`.
-6. Write simulation results using `WriteVehicleOutput()`.
+1. `ReadVehicleInput()` — read and validate input.
+2. `UpdateVehicleReception()` — update received signals and timeout states.
+3. `MonitorVehicleState()` — evaluate vehicle and sensor states.
+4. `UpdateVehicleTimers()` — update elapsed-time counters.
+5. `UpdateVehicleControl()` — compute control outputs.
+6. `WriteVehicleOutput()` — write simulation results.
 
-The first simulation cycle skips timer updates to preserve the initial timer values.
+The first cycle skips timer updates to preserve initial timer values.
 
-### Simulation Modules
+### Modules
 
 | Module | Responsibility |
-|---|---|
-| `main.c` | Simulation initialization and execution flow |
-| `simulation_io.c` | CSV input parsing, validation, and output |
-| `vehicle_simulation.c` | Vehicle reception, monitoring, timer, and control coordination |
-| `vehicle_control.c` | Headlight, wiper, and door lock control |
-| `vehicle_monitor.c` | Vehicle state validation, sensor fault detection, and warning determination |
-| `vehicle_timer.c` | Illuminance and wiper operation timer updates |
+| --- | --- |
+| `main.c` | Initialization and execution flow |
+| `simulation_io.c` | CSV input validation and output |
+| `vehicle_simulation.c` | Reception, monitoring, timer, and control coordination |
+| `vehicle_control.c` | Headlight, wiper, and door-lock control |
+| `vehicle_monitor.c` | Signal validation, sensor fault detection, and warnings |
+| `vehicle_timer.c` | Illuminance and wiper timers |
 
 ### Vehicle Reception Timeout
 
-The simulation tracks the reception of vehicle speed, gear, and engine state independently.
-
-Missing reception is represented by:
+Vehicle speed, gear, and engine state are tracked independently. Missing values are represented by:
 
 - Speed: `-1`
 - Gear: `GEAR_NOT_RECEIVED`
 - Engine: `ENGINE_NOT_RECEIVED`
 
-When a valid value is received, the corresponding stored value and last reception timestamp are updated.
+Receiving a valid value updates its stored state and last reception timestamp. If no value arrives for 500 ms, the corresponding reception state becomes `RX_TIMEOUT`. The overall reception state is determined from these individual states.
 
-If a signal is not received for 500 ms, its reception state changes to `RX_TIMEOUT`.
+### CSV Input and Output
 
-The overall vehicle reception state is determined from the individual reception states.
-
-### Simulation Input and Output
-
-The simulation reads:
-
-```text
-simulation/input.csv
-```
-
-Input columns:
+Input file: `simulation/input.csv`
 
 ```csv
 timeMs,speed,gear,engineState,illuminance,rainfall,doorFL,doorFR,doorRL,doorRR,lightSwitch,wiperSwitch
 ```
 
-The simulation generates:
-
-```text
-simulation/output.csv
-```
-
-Output columns:
+Output file: `simulation/output.csv`
 
 ```csv
 timeMs,headLightState,lightSensorState,wiperState,rainSensorState,doorLockState,clusterWarning
 ```
 
-Invalid CSV rows are reported and skipped by the input parser.
+Invalid input rows are reported and skipped. `ReadResult` distinguishes successful reads, end-of-file, and read errors.
 
-The simulation distinguishes successful input reading, end-of-file, and file read errors using the `ReadResult` enumeration.
+## Build and Run
 
-## Build and Execution
-
-The project uses GCC and Make.
-
-### Build
+Requires Linux, GCC, Make, and Python 3. No third-party Python packages are required.
 
 ```bash
-make
+make          # Build vehicle_simulation
+make run      # Build if needed, then run the simulation
+make clean    # Remove the executable
 ```
 
-This compiles all C source files in `src/` and generates the `vehicle_simulation` executable.
+The build compiles all `src/*.c` files with `-Wall -Wextra -std=c11 -Iinclude`.
 
-### Run Simulation
+## CSV-Driven Unit Testing
 
-```bash
-make run
-```
+`test/test_unit.py` compiles C functions into a shared library, calls them through Python `ctypes`, and checks the results against CSV test cases. It does not reproduce the control algorithms in Python.
 
-This builds the executable if necessary and runs the simulation.
+### Test Case Format
 
-### Clean
+Each `test/testcases/<FunctionName>.csv` contains:
 
-```bash
-make clean
-```
+1. `testCaseId` in the first column.
+2. Function parameters in declaration order.
+3. The expected return value in the last column, named after the function.
 
-This removes the generated executable.
-
-## Test Case Format
-
-Unit test cases are stored in CSV format.
-
-- The first column contains the test case ID.
-- Columns between the test case ID and the last column represent function parameters.
-- Each row represents one test case.
-- Each parameter column contains the argument passed to the function.
-- An empty cell means "Don't Care".
-- The last column is the function name and contains the expected return value.
-- Each CSV filename must match the corresponding function name.
-
-Example:
+Example: `test/testcases/ControlHeadLight.csv`
 
 ```csv
 testCaseId,vehicleRxState,engineState,lightSensorState,lightSwitch,wiperActiveTime,lowIlluminanceTime,highIlluminanceTime,currentHeadLight,ControlHeadLight
@@ -170,33 +138,14 @@ HL_002,RX_NORMAL,ENGINE_OFF,,,,,,,HEADLIGHT_OFF
 HL_003,RX_NORMAL,ENGINE_ON,SENSOR_FAULT,,,,,,HEADLIGHT_ON
 ```
 
-The example above represents test cases for:
+Blank parameter cells mean **Don't Care** in the test specification. The runner currently passes zero for such cells; this is a placeholder, not exhaustive testing of every possible value.
 
-```c
-HeadLightState ControlHeadLight(
-    RxState vehicleRxState,
-    EngineState engineState,
-    SensorState lightSensorState,
-    LightSwitch lightSwitch,
-    unsigned int wiperActiveTime,
-    unsigned int lowIlluminanceTime,
-    unsigned int highIlluminanceTime,
-    HeadLightState currentHeadLight
-);
-```
+### Test Case IDs
 
-Empty parameter cells are passed as zero by the test driver. These values are intended as placeholders for parameters that do not affect the expected result.
-
-## Test Case ID
-
-Test case IDs follow the format:
-
-```text
-<PREFIX>_<NUMBER>
-```
+Test IDs use the format `<PREFIX>_<NUMBER>`.
 
 | Prefix | Function |
-|---|---|
+| --- | --- |
 | `HL` | `ControlHeadLight()` |
 | `WP` | `ControlWiper()` |
 | `DL` | `ControlDoorLock()` |
@@ -209,261 +158,132 @@ Test case IDs follow the format:
 | `HIT` | `UpdateHighIlluminanceTime()` |
 | `WAT` | `UpdateWiperActiveTime()` |
 
-Examples:
-
-```text
-HL_001
-HL_002
-WP_001
-LSF_003
-LIT_001
-HIT_001
-WAT_001
-```
-
-## Automated Unit Testing
-
-Unit tests are automated using `test/test_driver.py`.
-
-The test driver uses Python's `ctypes` module to execute actual C functions compiled into a shared library.
-
-### Test Procedure
-
-1. Discover function declarations from header files in `include/`.
-2. Extract function names, parameter types, and return types.
-3. Compile C source files into a shared library using GCC.
-4. Load the compiled library using Python `ctypes`.
-5. Read test cases from the corresponding CSV files.
-6. Convert enumeration constants to their actual C values.
-7. Call each C function with the specified test inputs.
-8. Compare actual return values with expected results.
-9. Report PASS/FAIL for each test case and summarize the results.
-
-The test driver does not reimplement the vehicle control logic in Python.
-
 ### Running Unit Tests
-
-Run all unit tests:
 
 ```bash
 make test-unit
+python3 test/test_unit.py ControlWiper
+python3 test/test_unit.py ControlDoorLock
+python3 test/test_unit.py CheckLightSensorFault
 ```
 
-Alternatively:
+The runner discovers supported declarations in `include/`, finds corresponding CSV files, resolves C enumeration values, and reports each case as PASS or FAIL. A failing test produces a nonzero exit status.
 
-```bash
-python3 test/test_driver.py
-```
-
-Run tests for a specific function:
-
-```bash
-python3 test/test_driver.py ControlWiper
-```
-
-Other examples:
-
-```bash
-python3 test/test_driver.py ControlDoorLock
-python3 test/test_driver.py CheckLightSensorFault
-python3 test/test_driver.py UpdateWiperActiveTime
-```
-
-The test driver automatically locates the corresponding CSV file using the specified function name.
-
-### Unit Test Results
-
-Each test case is reported as PASS or FAIL.
-
-Example:
+Example output:
 
 ```text
 === ControlWiper ===
 [PASS] WP_001
 [PASS] WP_002
-[PASS] WP_003
 ...
-[PASS] WP_024
 ControlWiper: Passed=24, Failed=0
 
 === Total Results ===
 Passed: 24, Failed: 0
 ```
 
-When a test fails, the expected and actual return values are displayed.
+To add tests, declare and implement a C function, create its matching CSV file in `test/testcases/`, and run the unit-test tool. Only functions with corresponding test CSV files are selected for testing.
 
-Example:
+## Requirement Traceability
 
-```text
-[FAIL] LSF_006: expected=SENSOR_FAULT (1), actual=0
+`requirements/requirements.csv` records requirement IDs, categories, descriptions, priority, verification, and precedence. Requirements use the original IDs `L1`–`L6`, `W1`–`W5`, and `D1`–`D5`.
+
+`traceability/traceability.csv` connects requirements to their source files, C functions, test CSV files, and test case IDs:
+
+```csv
+requirementId,sourceFile,function,testFile,testCaseId
 ```
 
-The test runner returns a nonzero exit status when tests fail.
+One requirement can map to multiple cases, and one case can support multiple requirements. Traceability identifies relevant evidence but does not, by itself, establish complete verification coverage.
 
-### Adding New Unit Tests
+### Requirement-Based Testing
 
-To add test cases for an existing function:
+`test/test_requirement.py` runs the test cases linked to requirements through the traceability matrix.
 
-1. Open the corresponding CSV file in `test/testcases/`.
-2. Add new rows with test inputs and expected return values.
-3. Run the test driver.
+```bash
+make test-requirement       # All mapped requirements
+make test-requirement L1    # Requirement L1
+make test-requirement W3    # Requirement W3
+make test-requirement D3    # Requirement D3
+```
 
-To test a new function:
+Results are summarized by requirement. Tests linked to a requirement are verification evidence, but passing them does not prove every scenario or timing constraint has been covered.
 
-1. Declare the function in a header file under `include/`.
-2. Implement the function in a source file under `src/`.
-3. Create a CSV file named after the function in `test/testcases/`.
-4. Run the test driver.
+### Change Impact Analysis
 
-The test driver automatically discovers supported function declarations without requiring manual registration.
+`test/analyze_impact.py` reports the implementation and test artifacts associated with a requirement.
 
-The current implementation supports the project's simple function declarations and scalar parameter types, including integers and enumerations.
+```bash
+make analyze-impact D3
+make analyze-impact L2
+make analyze-impact W5
+```
+
+The output lists linked source files, functions, test files, and case IDs, with missing-file or missing-case indications where applicable. It is a list of **potential change impacts**, not an automatic source-code diff or a definitive list of required modifications.
 
 ## Automated Integration Testing
 
-Integration tests are automated using `test/test_integration.py`.
+`test/test_integration.py` compiles and runs the full vehicle simulation, then compares the generated `simulation/output.csv` against `test/expected_output.csv` by `timeMs`.
 
-Unlike unit tests, which verify individual functions, integration tests execute the complete vehicle simulation and compare its output against predefined expected results.
+The integration runner:
 
-### Integration Test Procedure
-
-1. Validate the structure of `simulation/input.csv` and `test/expected_output.csv`.
-2. Compile all C source files into a temporary executable using GCC.
-3. Remove any existing `simulation/output.csv` to prevent comparison with stale output.
-4. Execute the complete vehicle simulation.
-5. Read the generated `simulation/output.csv`.
-6. Validate CSV column names and timestamp values.
-7. Match expected and actual output rows using `timeMs`.
-8. Compare each output field against its expected value.
-9. Report PASS/FAIL for each timestamp and summarize the results.
-
-The integration test compiles the application with `-Wall`, `-Wextra`, and `-Werror`.
-
-### Integration Test Data
-
-Integration testing uses three CSV files.
+1. Validates input and expected-output CSV structures.
+2. Compiles the C application using GCC (including `-Werror`).
+3. Removes stale simulation output.
+4. Runs the simulation.
+5. Validates output columns and timestamps.
+6. Compares expected and actual values at each timestamp.
+7. Reports PASS/FAIL and exits nonzero on failure.
 
 | File | Purpose |
-|---|---|
-| `simulation/input.csv` | Vehicle and sensor input data |
-| `test/expected_output.csv` | Expected simulation results |
-| `simulation/output.csv` | Actual results generated by the simulation |
-
-Each expected output row corresponds to a simulation timestamp.
-
-The integration test compares rows using `timeMs` rather than relying on row positions.
-
-### Running Integration Tests
+| --- | --- |
+| `simulation/input.csv` | Simulation inputs |
+| `test/expected_output.csv` | Expected outputs |
+| `simulation/output.csv` | Actual generated outputs |
 
 ```bash
 make test-integration
-```
-
-Alternatively:
-
-```bash
+# Alternatively:
 python3 test/test_integration.py
 ```
 
-### Integration Test Results
-
-Each timestamp is reported as PASS or FAIL.
-
-Example:
-
-```text
-=== Integration Test ===
-[PASS] timeMs=0
-[PASS] timeMs=100
-[PASS] timeMs=200
-[PASS] timeMs=300
-
-Passed: 4
-Failed: 0
-```
-
-When an output differs from the expected value, the test displays the timestamp, field name, expected value, and actual value.
-
-Example:
-
-```text
-[FAIL] timeMs=500
-  headLightState:
-    expected = HEADLIGHT_ON
-    actual   = HEADLIGHT_OFF
-```
-
-The integration test also detects:
-
-- Missing or duplicate CSV column names.
-- Invalid or duplicate timestamps.
-- Missing expected or actual output rows.
-- Unexpected output rows.
-- Differences between input and expected row counts.
-- Compilation or simulation execution failures.
-
-The test returns a nonzero exit status when an error or mismatch is detected.
+The test detects mismatched values, missing or duplicate columns and timestamps, unexpected rows, and execution failures.
 
 ## Running All Tests
-
-The Makefile provides a single command to execute both unit and integration tests.
 
 ```bash
 make test
 ```
 
-This executes:
-
-1. `test/test_driver.py`
-2. `test/test_integration.py`
-
-Both test stages must complete successfully for the overall test command to succeed.
+This runs unit tests and integration tests. Requirement-based testing is a separate command and is **not** included in `make test`.
 
 ### Makefile Commands
 
 | Command | Description |
-|---|---|
-| `make` | Build the vehicle simulation executable |
-| `make run` | Build and run the vehicle simulation |
+| --- | --- |
+| `make` | Build the simulator |
+| `make run` | Build and run the simulator |
 | `make test` | Run unit and integration tests |
-| `make test-unit` | Run unit tests |
-| `make test-integration` | Run integration tests |
-| `make clean` | Remove the generated executable |
+| `make test-unit` | Run all CSV-driven unit tests |
+| `make test-integration` | Run end-to-end integration tests |
+| `make test-requirement` | Run tests mapped to all requirements |
+| `make test-requirement L1` | Run tests mapped to requirement L1 |
+| `make analyze-impact D3` | List artifacts potentially affected by requirement D3 |
+| `make clean` | Delete the compiled simulator |
 
-## Testing Scope
+With the current Makefile, run positional requirement commands separately rather than combining multiple targets in one `make` invocation.
 
-The project provides CSV-based unit tests for 11 functions across three modules, together with end-to-end integration testing of the vehicle simulation.
+## Testing Scope and Limitations
 
-### Unit Testing
+The CSV-driven unit-test suite covers 11 functions across three modules:
 
-| Module | Functions |
-|---|---:|
+| Module | Number of functions |
+| --- | ---: |
 | `vehicle_control.c` | 3 |
 | `vehicle_monitor.c` | 5 |
 | `vehicle_timer.c` | 3 |
 | **Total** | **11** |
 
-### Integration Testing
+Integration tests cover input parsing, reception timeout handling, monitoring, timers, vehicle controls, cluster warnings, and output generation. All tests run on the host computer with GCC rather than on a target MCU.
 
-Integration testing verifies the combined behavior of:
-
-- Vehicle input parsing and validation.
-- Vehicle data reception and timeout handling.
-- Vehicle and sensor state monitoring.
-- Timer updates.
-- Headlight, wiper, and door lock control.
-- Cluster warning determination.
-- CSV output generation.
-
-Tests are executed on the host computer using GCC rather than on a target microcontroller.
-
-Passing all defined tests does not necessarily indicate complete code coverage or correctness for every possible input.
-
-## Requirements
-
-- Python 3
-- GCC
-- Make
-- Linux environment
-
-No additional Python packages are required.
+Passing the defined test suite does not guarantee complete input-space coverage, code coverage, or correctness under all operating conditions.
