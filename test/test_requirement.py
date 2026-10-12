@@ -17,7 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 REQUIREMENTS = ROOT / 'requirements' / 'requirements.csv'
 TRACEABILITY = ROOT / 'traceability' / 'traceability.csv'
-DRIVER = ROOT / 'test' / 'test_driver.py'
+DRIVER = ROOT / 'test' / 'test_unit.py'
 RESULT = re.compile(r'^\[(PASS|FAIL)\]\s+(\S+)', re.MULTILINE)
 
 
