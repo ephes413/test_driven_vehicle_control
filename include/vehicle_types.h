@@ -1,6 +1,26 @@
 #ifndef VEHICLE_TYPES_H
 #define VEHICLE_TYPES_H
 
+/* 시동 조작 */
+typedef enum {
+    ENGINE_CMD_OFF,
+    ENGINE_CMD_ON
+} EngineCommand;
+
+/* 기어 조작 */
+typedef enum {
+    GEAR_CMD_P,
+    GEAR_CMD_R,
+    GEAR_CMD_N,
+    GEAR_CMD_D
+} GearCommand;
+
+/* 페달 조작 */
+typedef enum {
+    PEDAL_RELEASED,
+    PEDAL_PRESSED
+} PedalCommand;
+
 /* ==================== 입력 ==================== */
 
 /* Gear */

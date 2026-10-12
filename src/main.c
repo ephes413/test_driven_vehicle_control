@@ -3,10 +3,10 @@
 #include "vehicle_simulation.h"
 
 int main(void) {
-    FILE *inputFile = fopen("simulation/input.csv", "r");
+    FILE *inputFile = fopen("simulation/status.csv", "r");
 
     if (inputFile == NULL) {
-        perror("Failed to open input.csv");
+        perror("Failed to open status.csv");
         return 1;
     }
 
@@ -18,10 +18,10 @@ int main(void) {
         return 1;
     }
 
-    FILE *outputFile = fopen("simulation/output.csv", "w");
+    FILE *outputFile = fopen("simulation/result.csv", "w");
 
     if (outputFile == NULL) {
-        perror("Failed to open output.csv");
+        perror("Failed to open result.csv");
         fclose(inputFile);
         return 1;
     }
@@ -108,7 +108,7 @@ int main(void) {
     }
 
     if (readResult == READ_ERROR) {
-        fprintf(stderr, "Failed to read input.csv\n");
+        fprintf(stderr, "Failed to read status.csv\n");
     }
 
     fclose(inputFile);

@@ -174,8 +174,8 @@ def compare(expected_path, actual_path, input_path):
 
 
 def main():
-    input_path = SIMULATION / "input.csv"
-    output_path = SIMULATION / "output.csv"
+    input_path = SIMULATION / "status.csv"
+    output_path = SIMULATION / "result.csv"
 
     for path in (input_path, EXPECTED):
         if not path.is_file():
@@ -198,7 +198,7 @@ def main():
             run(executable)
 
         if not output_path.is_file():
-            raise RuntimeError("Simulation did not create output.csv")
+            raise RuntimeError("Simulation did not create result.csv")
 
         return 0 if compare(
             EXPECTED,
