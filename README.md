@@ -131,9 +131,17 @@ CSV enum values must match their C names exactly. Avoid spaces around field valu
 
 ### Reception Timeout
 
-Speed, gear, and engine reception are tracked independently. Missing inputs are represented by `-1` (speed), `GEAR_NOT_RECEIVED` (gear), and `ENGINE_NOT_RECEIVED` (engine). Signals not received for 500 ms enter `RX_TIMEOUT`.
+Speed, gear, and engine reception are tracked independently. Missing inputs are represented by the following CSV values:
 
-**Known limitation:** Reverse speed `-1` conflicts with the missing-speed marker. Reception encoding should be revised before relying on this reverse-driving case.
+- Speed: `SPEED_NOT_RECEIVED`
+- Gear: `GEAR_NOT_RECEIVED`
+- Engine: `ENGINE_NOT_RECEIVED`
+
+`ReadVehicleStatus()` converts `SPEED_NOT_RECEIVED` into `INT_MIN`, as defined in `vehicle_types.h`. This allows negative speed values, including `-1`, to represent valid reverse driving without conflicting with the missing-speed marker.
+
+Each successfully received signal updates its last reception timestamp. If a signal is not received for 500 ms, its reception state changes to `RX_TIMEOUT`.
+
+The last valid speed, gear, and engine values are retained when their corresponding signals are missing.
 
 ## Build and Run
 
