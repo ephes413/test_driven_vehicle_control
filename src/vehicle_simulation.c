@@ -7,7 +7,30 @@
 #define RX_TIMEOUT_MS 500U
 #define SPEED_NOT_RECEIVED (-1)
 
-void UpdateVehicleReception(
+static void UpdateVehicleReception(
+    const VehicleStatus *input,
+    VehicleReception *reception
+);
+
+static void MonitorVehicleState(
+    const VehicleStatus *input,
+    const VehicleReception *reception,
+    VehicleMonitor *monitor
+);
+
+static void UpdateVehicleTimers(
+    const VehicleStatus *input,
+    VehicleControlState *control
+);
+
+static void UpdateVehicleControl(
+    const VehicleStatus *input,
+    const VehicleReception *reception,
+    const VehicleMonitor *monitor,
+    VehicleControlState *control
+);
+
+static void UpdateVehicleReception(
     const VehicleStatus *input,
     VehicleReception *reception
 ) {
@@ -45,7 +68,7 @@ void UpdateVehicleReception(
         ? RX_TIMEOUT : RX_NORMAL;
 }
 
-void MonitorVehicleState(
+static void MonitorVehicleState(
     const VehicleStatus *input,
     const VehicleReception *reception,
     VehicleMonitor *monitor
@@ -85,7 +108,7 @@ void MonitorVehicleState(
     );
 }
 
-void UpdateVehicleTimers(
+static void UpdateVehicleTimers(
     const VehicleStatus *input,
     VehicleControlState *control
 ) {
@@ -105,7 +128,7 @@ void UpdateVehicleTimers(
     );
 }
 
-void UpdateVehicleControl(
+static void UpdateVehicleControl(
     const VehicleStatus *input,
     const VehicleReception *reception,
     const VehicleMonitor *monitor,

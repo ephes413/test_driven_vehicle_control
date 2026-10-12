@@ -39,29 +39,6 @@ typedef struct {
     DoorLockState doorLockState;
 } VehicleControlState;
 
-void UpdateVehicleReception(
-    const VehicleStatus *input,
-    VehicleReception *reception
-);
-
-void MonitorVehicleState(
-    const VehicleStatus *input,
-    const VehicleReception *reception,
-    VehicleMonitor *monitor
-);
-
-void UpdateVehicleTimers(
-    const VehicleStatus *input,
-    VehicleControlState *control
-);
-
-void UpdateVehicleControl(
-    const VehicleStatus *input,
-    const VehicleReception *reception,
-    const VehicleMonitor *monitor,
-    VehicleControlState *control
-);
-
 int RunDrivingSimulation(void);
 int RunControlSimulation(void);
 
