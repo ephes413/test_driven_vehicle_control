@@ -6,7 +6,7 @@ TARGET = vehicle_simulation
 SRC = $(wildcard src/*.c)
 HEADERS = $(wildcard include/*.h)
 
-.PHONY: all run test test-unit test-control test-requirement analyze-impact check-traceability clean
+.PHONY: all run test test-unit test-driving test-control test-requirement analyze-impact check-traceability clean
 
 .DEFAULT_GOAL := all
 
@@ -18,12 +18,15 @@ $(TARGET): $(SRC) $(HEADERS)
 run: $(TARGET)
 	./$(TARGET)
 
-test: test-unit test-control
+test: test-unit test-driving test-control
 
 UNIT_FUNC := $(filter-out test-unit,$(MAKECMDGOALS))
 
 test-unit:
 	python3 test/test_unit.py $(UNIT_FUNC)
+
+test-driving:
+	python3 test/test_driving.py
 
 test-control:
 	python3 test/test_control.py

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 INCLUDE = ROOT / "include"
 SRC = ROOT / "src"
 SIMULATION = ROOT / "simulation"
-EXPECTED = ROOT / "test" / "expected_output.csv"
+EXPECTED = ROOT / "test" / "expected_result.csv"
 
 
 def build(executable):
