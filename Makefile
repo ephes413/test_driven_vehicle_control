@@ -5,7 +5,7 @@ TARGET = vehicle_simulation
 SRC = $(wildcard src/*.c)
 HEADERS = $(wildcard include/*.h)
 
-.PHONY: all run test test-unit test-integration test-requirement analyze-impact clean
+.PHONY: all run test test-unit test-integration test-requirement analyze-impact check-traceability clean
 
 .DEFAULT_GOAL := all
 
@@ -39,6 +39,9 @@ ifneq ($(filter test-requirement analyze-impact,$(MAKECMDGOALS)),)
 $(filter-out test-requirement analyze-impact,$(MAKECMDGOALS)):
 	@:
 endif
+
+check-traceability:
+	python3 test/check_traceability.py
 
 clean:
 	rm -f $(TARGET)
