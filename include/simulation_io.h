@@ -7,7 +7,7 @@
 typedef struct {
     unsigned int timeMs;
     int speed;
-    Gear gear;
+    GearState gear;
     EngineState engineState;
 
     int illuminance;

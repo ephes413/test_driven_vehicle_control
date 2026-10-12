@@ -30,7 +30,7 @@ typedef enum {
     GEAR_N,
     GEAR_D,
     GEAR_NOT_RECEIVED
-} Gear;
+} GearState;
 
 /* Engine */
 typedef enum {

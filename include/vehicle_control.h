@@ -27,7 +27,7 @@ WiperState ControlWiper(
 DoorLockState ControlDoorLock(
     RxState vehicleRxState,
     EngineState engineState,
-    Gear gear,
+    GearState gear,
     SpeedState speedState,
     int speed,
     DoorLockState currentDoorLock

@@ -9,4 +9,10 @@ EngineState ControlEngine(
     EngineCommand engineCommand
 );
 
+GearState ControlGear(
+    int speed,
+    GearState currentGear,
+    GearCommand gearCommand
+);
+
 #endif

@@ -1,13 +1,13 @@
 #include "simulation_io.h"
 #include <string.h>
 
-static int ParseGear(const char *str, Gear *value);
+static int ParseGear(const char *str, GearState *value);
 static int ParseEngineState(const char *str, EngineState *value);
 static int ParseDoorState(const char *str, DoorState *value);
 static int ParseLightSwitch(const char *str, LightSwitch *value);
 static int ParseWiperSwitch(const char *str, WiperSwitch *value);
 
-static int ParseGear(const char *str, Gear *value) {
+static int ParseGear(const char *str, GearState *value) {
     if (strcmp(str, "GEAR_P") == 0) *value = GEAR_P;
     else if (strcmp(str, "GEAR_R") == 0) *value = GEAR_R;
     else if (strcmp(str, "GEAR_N") == 0) *value = GEAR_N;

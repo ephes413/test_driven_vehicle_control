@@ -10,7 +10,7 @@ typedef struct {
     unsigned int lastEngineRxTime;
 
     int speed;
-    Gear gear;
+    GearState gear;
     EngineState engineState;
 
     RxState speedRxState;
