@@ -115,3 +115,11 @@ D5,src/vehicle_monitor.c,DetermineClusterWarning,test/testcases/DetermineCluster
 D5,src/vehicle_monitor.c,DetermineClusterWarning,test/testcases/DetermineClusterWarning.csv,CW_002
 D5,src/vehicle_monitor.c,DetermineClusterWarning,test/testcases/DetermineClusterWarning.csv,CW_003
 D5,src/vehicle_monitor.c,DetermineClusterWarning,test/testcases/DetermineClusterWarning.csv,CW_004
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_001
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_002
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_003
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_004
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_005
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_006
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_007
+R1,src/vehicle_driving.c,ControlEngine,test/testcases/ControlEngine.csv,ENG_008

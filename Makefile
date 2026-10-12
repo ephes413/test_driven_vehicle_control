@@ -1,3 +1,4 @@
+
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -Iinclude
 
@@ -19,8 +20,10 @@ run: $(TARGET)
 
 test: test-unit test-control
 
+UNIT_FUNC := $(filter-out test-unit,$(MAKECMDGOALS))
+
 test-unit:
-	python3 test/test_unit.py
+	python3 test/test_unit.py $(UNIT_FUNC)
 
 test-control:
 	python3 test/test_control.py
@@ -35,8 +38,11 @@ IMPACT_ID := $(filter-out analyze-impact,$(MAKECMDGOALS))
 analyze-impact:
 	python3 test/analyze_impact.py $(IMPACT_ID)
 
-ifneq ($(filter test-requirement analyze-impact,$(MAKECMDGOALS)),)
-$(filter-out test-requirement analyze-impact,$(MAKECMDGOALS)):
+PARAM_TARGETS := $(filter test-unit test-requirement analyze-impact,$(MAKECMDGOALS))
+PARAM_ARGS := $(filter-out test-unit test-requirement analyze-impact,$(MAKECMDGOALS))
+
+ifneq ($(PARAM_TARGETS),)
+$(PARAM_ARGS):
 	@:
 endif
 

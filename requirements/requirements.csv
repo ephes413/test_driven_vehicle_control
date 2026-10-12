@@ -15,3 +15,4 @@ D2,DoorLock,그 외에 시동이 꺼져 있거나 기어가 P이면 잠금을 �
 D3,DoorLock,그 외에 유효한 속도가 15 km/h 이상이면 잠근다. D1~D3에 해당하지 않으면 직전 잠금 상태를 유지한다.,Required,Test,3
 D4,Warning,"유효한 속도가 0보다 크고 문이 하나라도 열려 있으면 ""주행 중 도어 열림"" 경고.",Required,Test,
 D5,Warning,경고는 하나만 표시: 주행 중 도어 열림 > 조도 센서 고장 > 강우 센서 고장. 없으면 표시하지 않는다.,Required,Test,
+R1,Driving,시동이 꺼져 있으면 차는 움직이지 않는다. 시동은 정지 상태에서만 켜고 끌 수 있다.,Optional,Demonstration,1
