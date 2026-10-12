@@ -3,9 +3,10 @@
 #include "vehicle_timer.h"
 #include "vehicle_control.h"
 #include "vehicle_driving.h"
+#include <limits.h>
 
 #define RX_TIMEOUT_MS 500U
-#define SPEED_NOT_RECEIVED (-1)
+#define SPEED_NOT_RECEIVED INT_MIN
 
 static void UpdateVehicleReception(
     const VehicleStatus *input,
