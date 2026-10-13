@@ -162,3 +162,14 @@ R5,src/vehicle_driving.c,UpdateVehicleSpeed,test/testcases/UpdateVehicleSpeed.cs
 R4,src/vehicle_driving.c,UpdateVehicleSpeed,test/testcases/UpdateVehicleSpeed.csv,SPD_019
 R4,src/vehicle_driving.c,UpdateVehicleSpeed,test/testcases/UpdateVehicleSpeed.csv,SPD_020
 R4,src/vehicle_driving.c,UpdateVehicleSpeed,test/testcases/UpdateVehicleSpeed.csv,SPD_021
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_001
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_002
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_003
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_004
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_005
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_006
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_007
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_008
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_009
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_010
+C3,src/vehicle_monitor.c,CheckSpeedValidity,test/testcases/CheckSpeedValidity.csv,SV_011
