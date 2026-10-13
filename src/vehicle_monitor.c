@@ -2,13 +2,21 @@
 
 #define RX_TIMEOUT_MS 500U
 
-SensorState CheckLightSensorFault(int illuminance) {
+SensorState CheckLightSensorFault(
+    RxState lightRxState,
+    int illuminance
+) {
+    if (lightRxState == RX_TIMEOUT) return SENSOR_FAULT;
     if (illuminance < 0) return SENSOR_FAULT;
     if (illuminance > 60000) return SENSOR_FAULT;
     return SENSOR_NORMAL;
 }
 
-SensorState CheckRainSensorFault(int rainAmount) {
+SensorState CheckRainSensorFault(
+    RxState rainRxState,
+    int rainAmount
+) {
+    if (rainRxState == RX_TIMEOUT) return SENSOR_FAULT;
     if (rainAmount < 0) return SENSOR_FAULT;
     if (rainAmount > 100) return SENSOR_FAULT;
     return SENSOR_NORMAL;

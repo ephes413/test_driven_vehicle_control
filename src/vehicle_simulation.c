@@ -52,6 +52,16 @@ static void UpdateVehicleReception(
         reception->lastEngineRxTime = timeMs;
     }
 
+    if (input->illuminance != ILLUMINANCE_NOT_RECEIVED) {
+        reception->illuminance = input->illuminance;
+        reception->lastLightRxTime = timeMs;
+    }
+
+    if (input->rainfall != RAINFALL_NOT_RECEIVED) {
+        reception->rainfall = input->rainfall;
+        reception->lastRainRxTime = timeMs;
+    }
+
     /* Check reception timeout */
     reception->speedRxState = CheckReceptionTimeout(
         timeMs,
@@ -67,7 +77,18 @@ static void UpdateVehicleReception(
         timeMs,
         reception->lastEngineRxTime
     );
+
+    reception->lightRxState = CheckReceptionTimeout(
+        timeMs,
+        reception->lastLightRxTime
+    );
+
+    reception->rainRxState = CheckReceptionTimeout(
+        timeMs,
+        reception->lastRainRxTime
+    );
 }
+
 
 static void MonitorVehicleState(
     const VehicleStatus *input,
@@ -86,11 +107,13 @@ static void MonitorVehicleState(
     );
 
     monitor->lightSensorState = CheckLightSensorFault(
-        input->illuminance
+        reception->lightRxState,
+        reception->illuminance
     );
 
     monitor->rainSensorState = CheckRainSensorFault(
-        input->rainfall
+        reception->rainRxState,
+        reception->rainfall
     );
 
     monitor->doorOpenWarningState = CheckDoorOpenWhileDriving(
@@ -274,18 +297,33 @@ int RunControlSimulation(void) {
     VehicleStatus input = {0};
 
     VehicleReception reception = {
-        .speed = 0,
-        .gear = GEAR_P,
-        .engineState = ENGINE_OFF,
+        .lastLightRxTime = 0,
+        .lastRainRxTime = 0,
         .lastSpeedRxTime = 0,
         .lastGearRxTime = 0,
         .lastEngineRxTime = 0,
+
+        .illuminance = 0,
+        .rainfall = 0,
+        .speed = 0,
+        .gear = GEAR_P,
+        .engineState = ENGINE_OFF,
+
+        .lightRxState = RX_NORMAL,
+        .rainRxState = RX_NORMAL,
         .speedRxState = RX_NORMAL,
         .gearRxState = RX_NORMAL,
         .engineRxState = RX_NORMAL
     };
 
-    VehicleMonitor monitor = {0};
+    VehicleMonitor monitor = {
+        .vehicleRxState = RX_NORMAL,
+        .speedState = SPEED_VALID,
+        .lightSensorState = SENSOR_NORMAL,
+        .rainSensorState = SENSOR_NORMAL,
+        .doorOpenWarningState = DOOR_OPEN_WARNING_INACTIVE,
+        .clusterWarning = WARNING_NONE
+    };
 
     VehicleControlState control = {
         .lowIlluminanceTime = 0,

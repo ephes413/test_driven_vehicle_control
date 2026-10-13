@@ -8,14 +8,20 @@ typedef struct {
     unsigned int lastSpeedRxTime;
     unsigned int lastGearRxTime;
     unsigned int lastEngineRxTime;
+    unsigned int lastLightRxTime;
+    unsigned int lastRainRxTime;
 
     int speed;
     GearState gear;
     EngineState engineState;
+    int illuminance;
+    int rainfall;
 
     RxState speedRxState;
     RxState gearRxState;
     RxState engineRxState;
+    RxState lightRxState;
+    RxState rainRxState;
 } VehicleReception;
 
 typedef struct {

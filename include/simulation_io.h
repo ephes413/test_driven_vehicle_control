@@ -6,10 +6,10 @@
 
 typedef struct {
     unsigned int timeMs;
+    
     int speed;
     GearState gear;
     EngineState engineState;
-
     int illuminance;
     int rainfall;
 

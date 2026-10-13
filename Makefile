@@ -18,29 +18,36 @@ $(TARGET): $(SRC) $(HEADERS)
 run: $(TARGET)
 	./$(TARGET)
 
+# Run all tests
 test: test-unit test-driving test-control
 
-UNIT_FUNC := $(filter-out test-unit,$(MAKECMDGOALS))
+# Unit tests
+UNIT_FUNC := $(if $(filter test-unit,$(MAKECMDGOALS)),$(filter-out test-unit,$(MAKECMDGOALS)))
 
 test-unit:
 	python3 test/test_unit.py $(UNIT_FUNC)
 
+# Driving tests
 test-driving:
 	python3 test/test_driving.py
 
+# Control tests
 test-control:
 	python3 test/test_control.py
 
-REQ_ID := $(filter-out test-requirement,$(MAKECMDGOALS))
+# Requirement-based tests
+REQ_ID := $(if $(filter test-requirement,$(MAKECMDGOALS)),$(filter-out test-requirement,$(MAKECMDGOALS)))
 
 test-requirement:
 	python3 test/test_requirement.py $(REQ_ID)
 
-IMPACT_ID := $(filter-out analyze-impact,$(MAKECMDGOALS))
+# Requirement impact analysis
+IMPACT_ID := $(if $(filter analyze-impact,$(MAKECMDGOALS)),$(filter-out analyze-impact,$(MAKECMDGOALS)))
 
 analyze-impact:
 	python3 test/analyze_impact.py $(IMPACT_ID)
 
+# Treat command-line parameters as valid Make targets
 PARAM_TARGETS := $(filter test-unit test-requirement analyze-impact,$(MAKECMDGOALS))
 PARAM_ARGS := $(filter-out test-unit test-requirement analyze-impact,$(MAKECMDGOALS))
 
@@ -49,6 +56,7 @@ $(PARAM_ARGS):
 	@:
 endif
 
+# Traceability validation
 check-traceability:
 	python3 test/check_traceability.py
 

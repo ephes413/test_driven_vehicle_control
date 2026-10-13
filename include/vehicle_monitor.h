@@ -13,10 +13,12 @@ DoorOpenWarningState CheckDoorOpenWhileDriving(
 );
 
 SensorState CheckLightSensorFault(
+    RxState lightRxState,
     int illuminance
 );
 
 SensorState CheckRainSensorFault(
+    RxState rainRxState,
     int rainAmount
 );
 

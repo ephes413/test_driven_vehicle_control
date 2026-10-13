@@ -2,7 +2,9 @@
 #define VEHICLE_TYPES_H
 
 #include <limits.h>
-#define SPEED_NOT_RECEIVED INT_MIN
+#define SPEED_NOT_RECEIVED       INT_MIN
+#define ILLUMINANCE_NOT_RECEIVED INT_MIN
+#define RAINFALL_NOT_RECEIVED    INT_MIN
 
 /* 시동 조작 */
 typedef enum {
