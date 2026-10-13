@@ -1,5 +1,7 @@
 #include "vehicle_monitor.h"
 
+#define RX_TIMEOUT_MS 500U
+
 SensorState CheckLightSensorFault(int illuminance) {
     if (illuminance < 0) return SENSOR_FAULT;
     if (illuminance > 60000) return SENSOR_FAULT;
@@ -59,4 +61,14 @@ SpeedState CheckSpeedValidity(
     if (speed < -20) return SPEED_INVALID;
     if (speed > 250) return SPEED_INVALID;
     return SPEED_VALID;
+}
+
+RxState CheckReceptionTimeout(
+    unsigned int currentTime,
+    unsigned int lastRxTime
+) {
+    if (currentTime - lastRxTime >= RX_TIMEOUT_MS)
+        return RX_TIMEOUT;
+
+    return RX_NORMAL;
 }

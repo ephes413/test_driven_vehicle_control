@@ -37,4 +37,9 @@ SpeedState CheckSpeedValidity(
     int speed
 );
 
+RxState CheckReceptionTimeout(
+    unsigned int currentTime,
+    unsigned int lastRxTime
+);
+
 #endif
